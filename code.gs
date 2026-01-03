@@ -1,48 +1,34 @@
 const ID_PLANILHA = "1rU7ETLF7vxQY3mQNFjVSpVmWts6lcZltzb22GQWy9sQ";
 
-/**
- * Função para gerar saída JSON com suporte a CORS
- */
-function GerarSaida(objeto) {
-  return ContentService.createTextOutput(JSON.stringify(objeto))
-    .setMimeType(ContentService.MimeType.JSON);
-}
-
 function doGet(e) {
-  // Se houver um parâmetro 'api', retorna JSON, caso contrário, retorna a página HTML
+  // Se o GitHub pedir dados (?api=true), envia JSON. Se abrir no Google, abre o HTML.
   if (e.parameter.api) {
-    return GerarSaida(getDadosDashboard());
+    return ContentService.createTextOutput(JSON.stringify(getDadosDashboard()))
+      .setMimeType(ContentService.MimeType.JSON);
   }
   return HtmlService.createTemplateFromFile('index')
     .evaluate()
     .setTitle('SAP Quality Analytics')
+    .addMetaTag('viewport', 'width=device-width, initial-scale=1')
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
 
 function getDadosDashboard() {
   const ss = SpreadsheetApp.openById(ID_PLANILHA);
   const sheet = ss.getSheetByName("ControleCds");
-  if (!sheet) return [];
-
   const dados = sheet.getDataRange().getValues();
-  if (dados.length <= 1) return [];
   dados.shift(); // Remove cabeçalho
   
-  return dados.map(function(linha, indice) {
+  return dados.map((linha, indice) => {
     let dataFormatada = "-";
-    let dataISO = ""; 
-    
-    // Tratamento robusto de Data para evitar "undefined"
-    if (linha[5]) { 
-      try {
-        const dataObj = (linha[5] instanceof Date) ? linha[5] : new Date(linha[5]);
-        if (!isNaN(dataObj.getTime())) {
-          dataFormatada = Utilities.formatDate(dataObj, Session.getScriptTimeZone(), "dd/MM/yyyy");
-          dataISO = dataObj.toISOString().split('T')[0]; 
-        }
-      } catch (e) { dataFormatada = String(linha[5]); }
+    let dataISO = "";
+    if (linha[5]) {
+      const dataObj = (linha[5] instanceof Date) ? linha[5] : new Date(linha[5]);
+      if (!isNaN(dataObj.getTime())) {
+        dataFormatada = Utilities.formatDate(dataObj, "GMT-3", "dd/MM/yyyy");
+        dataISO = dataObj.toISOString().split('T')[0];
+      }
     }
-
     return {
       idLinha: indice + 2,
       cd: String(linha[0] || ""),
