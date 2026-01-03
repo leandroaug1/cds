@@ -15,7 +15,7 @@ function getDadosDashboard() {
   const ss = SpreadsheetApp.openById(ID_PLANILHA);
   const sheet = ss.getSheetByName("ControleCds");
   const dados = sheet.getDataRange().getValues();
-  dados.shift(); // Remove o cabeçalho
+  dados.shift();
 
   return dados.map(function(linha) {
     let dataFormatada = "-";
@@ -35,10 +35,25 @@ function getDadosDashboard() {
       data: dataFormatada,
       qtd: Number(linha[6]) || 0,
       parecer: String(linha[7] || "Sem Parecer"),
-      anexo1: String(linha[8] || ""), // Coluna I (Link Imagem)
-      anexo2: String(linha[9] || "")  // Coluna J (Link PPTX)
+      anexo1: String(linha[8] || ""),
+      anexo2: String(linha[9] || "")
     };
   });
+}
+
+// Função para converter o ficheiro recebido em link do Google Drive
+function uploadParaDrive(base64Data, fileName) {
+  try {
+    const folder = DriveApp.getRootFolder(); // Pode trocar pelo ID de uma pasta específica
+    const contentType = base64Data.substring(5, base64Data.indexOf(';'));
+    const bytes = Utilities.base64Decode(base64Data.split(',')[1]);
+    const blob = Utilities.newBlob(bytes, contentType, fileName);
+    const file = folder.createFile(blob);
+    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+    return file.getUrl();
+  } catch (e) {
+    return "Erro no upload: " + e.toString();
+  }
 }
 
 function salvarDados(obj) {
