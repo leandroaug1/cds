@@ -11,7 +11,7 @@
     .header { background: #2c3e50; color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; }
     .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; padding: 20px; }
     .card { background: white; padding: 20px; border-radius: 6px; border-left: 5px solid #3498db; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-    .charts-row { display: flex; gap: 20px; padding: 0 20px; height: 450px; }
+    .charts-row { display: flex; gap: 20px; padding: 0 20px; height: 400px; }
     .chart-box { background: white; border-radius: 6px; padding: 15px; flex: 1; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
     table { width: 97%; margin: 20px auto; border-collapse: collapse; background: white; font-size: 12px; }
     th { background: #f8f9fa; padding: 12px; text-align: left; border-bottom: 2px solid #eee; }
@@ -20,11 +20,11 @@
 </head>
 <body>
 
-  <div id="loading"><h3>Sincronizando com Banco de Dados...</h3></div>
+  <div id="loading"><h3>Sincronizando Banco de Dados...</h3></div>
 
   <div class="header">
     <h1>SAP Quality Dashboard</h1>
-    <button onclick="iniciar()" style="background:#f1c40f; border:none; padding:10px 20px; cursor:pointer; font-weight:bold; border-radius:4px">Atualizar Dados</button>
+    <button onclick="iniciar()" style="background:#f1c40f; border:none; padding:10px 20px; cursor:pointer; font-weight:bold; border-radius:4px">Atualizar</button>
   </div>
 
   <div class="kpi-grid">
@@ -66,17 +66,17 @@
     }
 
     function renderizar() {
-      // KPIs
+      // Atualiza KPIs
       document.getElementById('kpi-total').innerText = dadosBrutos.length;
       document.getElementById('kpi-escape').innerText = dadosBrutos.reduce((a, b) => a + b.qtd, 0);
       document.getElementById('kpi-proc').innerText = dadosBrutos.filter(d => d.parecer === "Procedente").length;
       document.getElementById('kpi-nproc').innerText = dadosBrutos.filter(d => d.parecer.includes("Não")).length;
 
-      // Tabela CORRIGIDA para ler a chave dataVisual
+      // Tabela com Data Corrigida
       const html = dadosBrutos.map(d => `
         <tr>
           <td>${d.cd}</td><td>${d.os}</td><td>${d.pn}</td><td>${d.aplic}</td>
-          <td>${d.dataVisual}</td> <td><b>${d.qtd}</b></td><td>${d.parecer}</td><td>${d.anexosHtml}</td>
+          <td>${d.dataParaExibir}</td> <td><b>${d.qtd}</b></td><td>${d.parecer}</td><td>${d.anexosHtml}</td>
         </tr>
       `).join('');
       document.getElementById('corpoTabela').innerHTML = html;
@@ -85,41 +85,22 @@
     }
 
     function desenharGraficos() {
-      // Gráfico de Parecer Técnico (Rosca)
+      // Rosca (Verde e Amarelo)
       var proc = dadosBrutos.filter(d => d.parecer === "Procedente").length;
       var nProc = dadosBrutos.filter(d => d.parecer.includes("Não")).length;
-      
-      var dataRosca = google.visualization.arrayToDataTable([
-        ['Status', 'Quantidade'], 
-        ['Procedente', proc], 
-        ['Não Procedente', nProc]
-      ]);
-      
-      new google.visualization.PieChart(document.getElementById('div_rosca')).draw(dataRosca, {
-        pieHole: 0.6, 
-        title: 'Parecer Técnico', 
-        colors: ['#00ce64', '#f1c40f'], // Verde e Amarelo
-        chartArea: {width:'90%', height:'75%'}, 
-        legend: {position: 'bottom'}
+      var dataR = google.visualization.arrayToDataTable([['S','Q'], ['Procedente', proc], ['Não Procedente', nProc]]);
+      new google.visualization.PieChart(document.getElementById('div_rosca')).draw(dataR, {
+        pieHole: 0.5, title: 'Parecer Técnico', colors: ['#00ce64', '#f1c40f'], legend: 'bottom'
       });
 
-      // Gráfico de Top Ocorrências (Barras)
+      // Barras (Azul Escuro)
       var apps = {};
       dadosBrutos.forEach(d => { apps[d.aplic] = (apps[d.aplic] || 0) + 1; });
-      var barData = new google.visualization.DataTable();
-      barData.addColumn('string', 'App'); 
-      barData.addColumn('number', 'Qtd'); 
-      barData.addColumn({type:'string', role:'annotation'});
-      
-      Object.keys(apps).sort((a,b)=>apps[b]-apps[a]).slice(0,10).forEach(k => {
-        barData.addRow([k, apps[k], apps[k].toString()]);
-      });
-      
-      new google.visualization.ColumnChart(document.getElementById('div_barras')).draw(barData, {
-        title: 'Top 10 Aplicações', 
-        colors: ['#2c3e50'], // Azul Escuro
-        legend: 'none', 
-        chartArea: {width:'85%', height:'70%'}
+      var dataB = new google.visualization.DataTable();
+      dataB.addColumn('string', 'App'); dataB.addColumn('number', 'Qtd');
+      Object.keys(apps).sort((a,b)=>apps[b]-apps[a]).slice(0,10).forEach(k => dataB.addRow([k, apps[k]]));
+      new google.visualization.ColumnChart(document.getElementById('div_barras')).draw(dataB, {
+        title: 'Top Aplicações', colors: ['#2c3e50'], legend: 'none'
       });
     }
   </script>
