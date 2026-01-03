@@ -1,34 +1,53 @@
 const ID_PLANILHA = "1rU7ETLF7vxQY3mQNFjVSpVmWts6lcZltzb22GQWy9sQ";
 
+/**
+ * Função principal para lidar com requisições GET.
+ * Serve tanto para abrir o site no Google quanto para fornecer dados ao GitHub.
+ */
 function doGet(e) {
-  // Se o GitHub pedir dados (?api=true), envia JSON. Se abrir no Google, abre o HTML.
+  // Se a requisição vier do GitHub (contendo ?api=true), envia os dados como JSON
   if (e.parameter.api) {
-    return ContentService.createTextOutput(JSON.stringify(getDadosDashboard()))
+    const dados = getDadosDashboard();
+    return ContentService.createTextOutput(JSON.stringify(dados))
       .setMimeType(ContentService.MimeType.JSON);
   }
+  
+  // Se abrir pelo link do Google Script, renderiza a página HTML
   return HtmlService.createTemplateFromFile('index')
     .evaluate()
     .setTitle('SAP Quality Analytics')
-    .addMetaTag('viewport', 'width=device-width, initial-scale=1')
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
 
+/**
+ * Extrai e formata os dados da planilha.
+ */
 function getDadosDashboard() {
   const ss = SpreadsheetApp.openById(ID_PLANILHA);
   const sheet = ss.getSheetByName("ControleCds");
+  if (!sheet) return [];
+
   const dados = sheet.getDataRange().getValues();
-  dados.shift(); // Remove cabeçalho
+  if (dados.length <= 1) return [];
+  dados.shift(); // Remove o cabeçalho
   
-  return dados.map((linha, indice) => {
+  return dados.map(function(linha, indice) {
     let dataFormatada = "-";
-    let dataISO = "";
-    if (linha[5]) {
-      const dataObj = (linha[5] instanceof Date) ? linha[5] : new Date(linha[5]);
-      if (!isNaN(dataObj.getTime())) {
-        dataFormatada = Utilities.formatDate(dataObj, "GMT-3", "dd/MM/yyyy");
-        dataISO = dataObj.toISOString().split('T')[0];
+    let dataISO = ""; 
+    
+    // Tratamento de Data (Coluna F / Índice 5) para evitar erro 'undefined'
+    if (linha[5]) { 
+      try {
+        const dataObj = (linha[5] instanceof Date) ? linha[5] : new Date(linha[5]);
+        if (!isNaN(dataObj.getTime())) {
+          dataFormatada = Utilities.formatDate(dataObj, Session.getScriptTimeZone(), "dd/MM/yyyy");
+          dataISO = dataObj.toISOString().split('T')[0]; 
+        }
+      } catch (e) { 
+        dataFormatada = String(linha[5]); 
       }
     }
+
     return {
       idLinha: indice + 2,
       cd: String(linha[0] || ""),
@@ -39,7 +58,9 @@ function getDadosDashboard() {
       dataParaExibir: dataFormatada,
       dataISO: dataISO,
       qtd: Number(linha[6]) || 0,
-      parecer: linha[7] ? String(linha[7]).trim() : "Sem Parecer"
+      parecer: linha[7] ? String(linha[7]).trim() : "Sem Parecer",
+      // Links de anexos processados como strings
+      anexosHtml: (linha[8] || linha[9]) ? "Sim" : "-"
     };
   });
 }
