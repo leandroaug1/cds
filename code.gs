@@ -15,7 +15,7 @@ function getDadosDashboard() {
   const ss = SpreadsheetApp.openById(ID_PLANILHA);
   const sheet = ss.getSheetByName("ControleCds");
   const dados = sheet.getDataRange().getValues();
-  dados.shift();
+  dados.shift(); // Remove cabeçalho
 
   return dados.map(function(linha) {
     let dataFormatada = "-";
@@ -41,7 +41,7 @@ function getDadosDashboard() {
   });
 }
 
-// NOVA FUNÇÃO: Recebe o arquivo do formulário e salva no Drive
+// Função para converter arquivo em link do Drive
 function uploadParaDrive(base64Data, fileName) {
   try {
     const folder = DriveApp.getRootFolder(); 
@@ -52,7 +52,7 @@ function uploadParaDrive(base64Data, fileName) {
     file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
     return file.getUrl();
   } catch (e) {
-    return "Erro: " + e.toString();
+    return "Erro no upload: " + e.toString();
   }
 }
 
