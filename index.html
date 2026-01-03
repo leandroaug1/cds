@@ -9,33 +9,55 @@
     body { font-family: 'Segoe UI', sans-serif; background: var(--bi-gray); margin: 0; }
     .header { background: var(--bi-blue); color: white; padding: 15px 25px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
     .btn-new { background: var(--bi-green); color: white; border: none; padding: 10px 18px; cursor: pointer; font-weight: bold; border-radius: 6px; }
-    .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; padding: 15px; }
+    
+    /* Barra de Filtros estilo Power BI */
+    .filter-bar { display: flex; gap: 20px; padding: 15px; background: white; margin: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+    .filter-group { display: flex; flex-direction: column; flex: 1; }
+    .filter-group label { font-size: 11px; font-weight: bold; color: var(--bi-blue); margin-bottom: 5px; text-transform: uppercase; }
+    .filter-group select { padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
+
+    .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; padding: 0 15px 15px 15px; }
     .kpi-card { background: white; padding: 15px; border-radius: 8px; text-align: center; border-top: 5px solid var(--bi-blue); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
     .kpi-value { font-size: 26px; font-weight: bold; margin-top: 5px; }
+    
     .table-container { background: white; margin: 0 15px 20px; border-radius: 8px; overflow-x: auto; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
     table { width: 100%; border-collapse: collapse; font-size: 13px; }
     th { background: #f8f9fa; padding: 12px; text-align: left; color: var(--bi-blue); border-bottom: 2px solid #eee; }
     td { padding: 10px; border-bottom: 1px solid #f1f3f4; }
+    
     #loader { position: fixed; top:0; left:0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); z-index: 9999; display: none; flex-direction: column; justify-content: center; align-items: center; }
     .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--bi-blue); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
     #modalForm { display:none; position:fixed; z-index:1000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.6); }
     .modal-content { background:white; margin:2% auto; padding:25px; width:400px; border-radius:12px; max-height: 90vh; overflow-y: auto; }
-    .form-group { margin-bottom: 10px; }
-    .form-group label { display:block; font-size: 12px; font-weight: bold; margin-bottom: 2px; }
-    .form-group input, .form-group select { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
-    .btn-table-link { background: var(--bi-light); padding: 4px 8px; text-decoration: none; color: var(--bi-blue); border-radius: 4px; font-size: 11px; font-weight: bold; border: 1px solid var(--bi-blue); }
   </style>
 </head>
 <body>
 
-<div id="loader"><div class="spinner"></div><h3 id="loaderTxt" style="margin-top:15px">A carregar dados...</h3></div>
+<div id="loader"><div class="spinner"></div><h3 id="loaderTxt" style="margin-top:15px">Processando...</h3></div>
 
 <div class="header">
   <h2 style="margin:0">SAP Quality Analytics</h2>
   <div>
     <button class="btn-new" onclick="abrirModal()">+ NOVO REGISTRO</button>
     <button onclick="iniciar()" style="background:var(--bi-yellow); border:none; padding:10px; cursor:pointer; font-weight:bold; border-radius:6px; margin-left:8px">ATUALIZAR</button>
+  </div>
+</div>
+
+<div class="filter-bar">
+  <div class="filter-group">
+    <label>Parecer</label>
+    <select id="f-parecer" onchange="filtrar()">
+      <option value="">Todos</option>
+      <option value="Procedente">Procedente</option>
+      <option value="Não Procedente">Não Procedente</option>
+    </select>
+  </div>
+  <div class="filter-group">
+    <label>Aplicação</label>
+    <select id="f-aplic" onchange="filtrar()">
+      <option value="">Todas</option>
+    </select>
   </div>
 </div>
 
@@ -48,120 +70,69 @@
 
 <div class="table-container">
   <table>
-    <thead><tr><th>CD</th><th>OS</th><th>PN</th><th>DATA</th><th>QTD</th><th>PARECER</th><th>ANEXOS</th></tr></thead>
+    <thead>
+      <tr>
+        <th>CD</th><th>OS</th><th>PN</th><th>OC</th><th>APLIC.</th><th>DATA</th><th>QTD</th><th>PARECER</th><th>ANEXOS</th>
+      </tr>
+    </thead>
     <tbody id="corpoTabela"></tbody>
   </table>
 </div>
 
-<div id="modalForm">
-  <div class="modal-content">
-    <h3>Novo Registro Quality</h3>
-    <form id="meuForm">
-      <div class="form-group"><label>CD:</label><input type="text" id="in-cd" required></div>
-      <div class="form-group"><label>OS:</label><input type="text" id="in-os"></div>
-      <div class="form-group"><label>PN:</label><input type="text" id="in-pn"></div>
-      <div class="form-group"><label>OC:</label><input type="text" id="in-oc"></div>
-      <div class="form-group"><label>Aplicação:</label><input type="text" id="in-aplic"></div>
-      <div class="form-group"><label>Data:</label><input type="date" id="in-data" required></div>
-      <div class="form-group"><label>Qtd:</label><input type="number" id="in-qtd" value="1"></div>
-      <div class="form-group">
-        <label>Parecer:</label>
-        <select id="in-parecer">
-          <option value="Procedente">Procedente</option>
-          <option value="Não Procedente">Não Procedente</option>
-        </select>
-      </div>
-      <div class="form-group"><label>Anexo 1:</label><input type="file" id="f1"></div>
-      <div class="form-group"><label>Anexo 2:</label><input type="file" id="f2"></div>
-      <button type="button" onclick="enviar()" class="btn-new" style="width:100%; margin-top:10px">SALVAR NA PLANILHA</button>
-      <button type="button" onclick="fecharModal()" style="width:100%; margin-top:10px; background:none; border:none; color:gray; cursor:pointer">Cancelar</button>
-    </form>
-  </div>
-</div>
-
 <script>
-  // COLOQUE AQUI A URL DA SUA IMPLANTAÇÃO (WEB APP) TERMINADA EM /exec
   const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwZ0aaF_nK7i6EQVQXtdt2tLfk9ZrmJfgA2SSo5CEG2BvXafljmNspM1GG9_C-iJjkp/exec"; 
-  var dadosOriginais = [];
+  let dadosOriginais = [];
 
   window.onload = iniciar;
 
   function iniciar() {
     document.getElementById('loader').style.display = 'flex';
     fetch(SCRIPT_URL)
-      .then(response => {
-        if (!response.ok) throw new Error("Erro na rede");
-        return response.json();
-      })
+      .then(r => r.json())
       .then(res => {
         dadosOriginais = res;
-        renderizar();
-        document.getElementById('loader').style.display = 'none';
-      })
-      .catch(err => {
-        console.error(err);
-        alert("Erro ao carregar dados. Verifique a URL do Script.");
+        popularFiltroAplic();
+        renderizar(res);
         document.getElementById('loader').style.display = 'none';
       });
   }
 
-  async function enviar() {
-    const cd = document.getElementById('in-cd').value;
-    const data = document.getElementById('in-data').value;
-    if(!cd || !data) return alert("Campos CD e Data são obrigatórios!");
-
-    document.getElementById('loader').style.display = 'flex';
-    document.getElementById('loaderTxt').innerText = "A enviar registo...";
-
-    const f1 = document.getElementById('f1').files[0];
-    const f2 = document.getElementById('f2').files[0];
-
-    const payload = {
-      cd: cd, os: document.getElementById('in-os').value, pn: document.getElementById('in-pn').value,
-      oc: document.getElementById('in-oc').value, aplic: document.getElementById('in-aplic').value,
-      data: data, qtd: document.getElementById('in-qtd').value, parecer: document.getElementById('in-parecer').value,
-      anexo1Base64: f1 ? await toBase64(f1) : null, anexo1Nome: f1 ? f1.name : "",
-      anexo2Base64: f2 ? await toBase64(f2) : null, anexo2Nome: f2 ? f2.name : ""
-    };
-
-    fetch(SCRIPT_URL, {
-      method: 'POST',
-      body: JSON.stringify(payload)
-    })
-    .then(() => {
-      alert("Salvo com sucesso!");
-      document.getElementById('meuForm').reset();
-      fecharModal();
-      iniciar();
-    })
-    .catch(err => alert("Erro ao salvar: " + err))
-    .finally(() => document.getElementById('loader').style.display = 'none');
+  function popularFiltroAplic() {
+    const select = document.getElementById('f-aplic');
+    const aplicacoes = [...new Set(dadosOriginais.map(d => d.aplic))].sort();
+    select.innerHTML = '<option value="">Todas</option>';
+    aplicacoes.forEach(a => { if(a) select.add(new Option(a, a)); });
   }
 
-  const toBase64 = file => new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = e => reject(e);
-  });
+  function filtrar() {
+    const p = document.getElementById('f-parecer').value;
+    const a = document.getElementById('f-aplic').value;
+    const filtrados = dadosOriginais.filter(d => 
+      (p === "" || d.parecer === p) && (a === "" || d.aplic === a)
+    );
+    renderizar(filtrados);
+  }
 
-  function renderizar() {
-    document.getElementById('k-total').innerText = dadosOriginais.length;
-    document.getElementById('k-escape').innerText = dadosOriginais.reduce((a, b) => a + (Number(b.qtd) || 0), 0);
-    document.getElementById('k-proc').innerText = dadosOriginais.filter(d => d.parecer === "Procedente").length;
-    document.getElementById('k-nproc').innerText = dadosOriginais.filter(d => d.parecer.includes("Não")).length;
+  function renderizar(dados) {
+    document.getElementById('k-total').innerText = dados.length;
+    document.getElementById('k-escape').innerText = dados.reduce((acc, curr) => acc + (Number(curr.qtd) || 0), 0);
+    document.getElementById('k-proc').innerText = dados.filter(d => d.parecer === "Procedente").length;
+    document.getElementById('k-nproc').innerText = dados.filter(d => d.parecer.includes("Não")).length;
 
-    document.getElementById('corpoTabela').innerHTML = dadosOriginais.map(d => `
+    document.getElementById('corpoTabela').innerHTML = dados.map(d => `
       <tr>
-        <td>${d.cd}</td><td>${d.os}</td><td>${d.pn}</td><td>${d.data}</td><td>${d.qtd}</td><td>${d.parecer}</td>
+        <td>${d.cd}</td><td>${d.os}</td><td>${d.pn}</td><td>${d.oc}</td><td>${d.aplic}</td>
+        <td>${d.data}</td><td>${d.qtd}</td>
+        <td style="font-weight:bold; color:${d.parecer === 'Procedente' ? 'var(--bi-green)' : 'var(--bi-red)'}">${d.parecer}</td>
         <td>
-          ${d.anexo1 ? `<a href="${d.anexo1}" target="_blank" class="btn-table-link">Foto</a>` : ''}
-          ${d.anexo2 ? `<a href="${d.anexo2}" target="_blank" class="btn-table-link">Doc</a>` : ''}
+          ${d.anexo1 ? `<a href="${d.anexo1}" target="_blank" style="color:blue;margin-right:5px">Foto</a>` : ''}
+          ${d.anexo2 ? `<a href="${d.anexo2}" target="_blank" style="color:blue">Doc</a>` : ''}
         </td>
       </tr>
     `).join('');
   }
 
+  // Funções de Modal e Envio (mantenha as que você já tem ou use as simplificadas)
   function abrirModal() { document.getElementById('modalForm').style.display = 'block'; }
   function fecharModal() { document.getElementById('modalForm').style.display = 'none'; }
 </script>
