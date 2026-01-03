@@ -38,7 +38,7 @@ function getDadosDashboard() {
   const ss = SpreadsheetApp.openById(ID_PLANILHA);
   const sheet = ss.getSheetByName("ControleCds");
   const dados = sheet.getDataRange().getValues();
-  dados.shift(); 
+  dados.shift(); // Remove cabeçalho
 
   return dados.map(linha => {
     let d = linha[5];
@@ -48,7 +48,6 @@ function getDadosDashboard() {
       pn: String(linha[2] || ""),
       oc: String(linha[3] || ""),
       aplic: String(linha[4] || ""),
-      // Propriedades de data sincronizadas
       dataRaw: d instanceof Date ? d.toISOString().split('T')[0] : "", 
       dataExibicao: d instanceof Date ? Utilities.formatDate(d, "GMT-3", "dd/MM/yyyy") : String(d || "-"),
       qtd: Number(linha[6]) || 0,
