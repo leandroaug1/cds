@@ -35,16 +35,16 @@ function getDadosDashboard() {
       data: dataFormatada,
       qtd: Number(linha[6]) || 0,
       parecer: String(linha[7] || "Sem Parecer"),
-      anexo1: String(linha[8] || ""),
-      anexo2: String(linha[9] || "")
+      anexo1: String(linha[8] || ""), // Coluna I
+      anexo2: String(linha[9] || "")  // Coluna J
     };
   });
 }
 
-// Função para converter o ficheiro recebido em link do Google Drive
+// NOVA FUNÇÃO: Recebe o arquivo do formulário e salva no Drive
 function uploadParaDrive(base64Data, fileName) {
   try {
-    const folder = DriveApp.getRootFolder(); // Pode trocar pelo ID de uma pasta específica
+    const folder = DriveApp.getRootFolder(); 
     const contentType = base64Data.substring(5, base64Data.indexOf(';'));
     const bytes = Utilities.base64Decode(base64Data.split(',')[1]);
     const blob = Utilities.newBlob(bytes, contentType, fileName);
@@ -52,7 +52,7 @@ function uploadParaDrive(base64Data, fileName) {
     file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
     return file.getUrl();
   } catch (e) {
-    return "Erro no upload: " + e.toString();
+    return "Erro: " + e.toString();
   }
 }
 
