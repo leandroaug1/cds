@@ -1,5 +1,8 @@
 const ID_PLANILHA = "1rU7ETLF7vxQY3mQNFjVSpVmWts6lcZltzb22GQWy9sQ";
 
+/**
+ * Função GET: Envia os dados para o dashboard no GitHub.
+ */
 function doGet(e) {
   try {
     const dados = getDadosDashboard();
@@ -11,6 +14,9 @@ function doGet(e) {
   }
 }
 
+/**
+ * Função POST: Recebe novos registos do dashboard.
+ */
 function doPost(e) {
   try {
     const data = JSON.parse(e.postData.contents);
@@ -38,21 +44,25 @@ function getDadosDashboard() {
   const ss = SpreadsheetApp.openById(ID_PLANILHA);
   const sheet = ss.getSheetByName("ControleCds");
   const dados = sheet.getDataRange().getValues();
-  dados.shift(); 
+  dados.shift(); // Remove cabeçalho
 
-  return dados.map(linha => ({
-    cd: String(linha[0] || ""),
-    os: String(linha[1] || ""),
-    pn: String(linha[2] || ""),
-    oc: String(linha[3] || ""),
-    aplic: String(linha[4] || ""),
-    dataRaw: linha[5] instanceof Date ? linha[5].toISOString().split('T')[0] : "", 
-    dataExibicao: linha[5] instanceof Date ? Utilities.formatDate(linha[5], "GMT-3", "dd/MM/yyyy") : String(linha[5] || "-"),
-    qtd: Number(linha[6]) || 0,
-    parecer: String(linha[7] || "Sem Parecer"),
-    anexo1: String(linha[8] || ""),
-    anexo2: String(linha[9] || "")
-  }));
+  return dados.map(linha => {
+    let d = linha[5];
+    return {
+      cd: String(linha[0] || ""),
+      os: String(linha[1] || ""),
+      pn: String(linha[2] || ""),
+      oc: String(linha[3] || ""),
+      aplic: String(linha[4] || ""),
+      // Formatos de data para evitar o erro 'undefined'
+      dataRaw: d instanceof Date ? d.toISOString().split('T')[0] : "", 
+      dataExibicao: d instanceof Date ? Utilities.formatDate(d, "GMT-3", "dd/MM/yyyy") : String(d || "-"),
+      qtd: Number(linha[6]) || 0,
+      parecer: String(linha[7] || "Sem Parecer"),
+      anexo1: String(linha[8] || ""),
+      anexo2: String(linha[9] || "")
+    };
+  });
 }
 
 function uploadParaDrive(base64Data, fileName) {
