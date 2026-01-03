@@ -1,18 +1,15 @@
 const ID_PLANILHA = "1rU7ETLF7vxQY3mQNFjVSpVmWts6lcZltzb22GQWy9sQ";
 
 /**
- * Função principal para lidar com requisições GET.
- * Serve tanto para abrir o site no Google quanto para fornecer dados ao GitHub.
+ * Lida com requisições GET. 
+ * Se houver o parâmetro ?api=true, retorna JSON. Caso contrário, renderiza o HTML.
  */
 function doGet(e) {
-  // Se a requisição vier do GitHub (contendo ?api=true), envia os dados como JSON
   if (e.parameter.api) {
     const dados = getDadosDashboard();
     return ContentService.createTextOutput(JSON.stringify(dados))
       .setMimeType(ContentService.MimeType.JSON);
   }
-  
-  // Se abrir pelo link do Google Script, renderiza a página HTML
   return HtmlService.createTemplateFromFile('index')
     .evaluate()
     .setTitle('SAP Quality Analytics')
@@ -20,7 +17,7 @@ function doGet(e) {
 }
 
 /**
- * Extrai e formata os dados da planilha.
+ * Busca e formata os dados da planilha "ControleCds".
  */
 function getDadosDashboard() {
   const ss = SpreadsheetApp.openById(ID_PLANILHA);
@@ -29,23 +26,17 @@ function getDadosDashboard() {
 
   const dados = sheet.getDataRange().getValues();
   if (dados.length <= 1) return [];
-  dados.shift(); // Remove o cabeçalho
+  dados.shift(); // Remove cabeçalho
   
   return dados.map(function(linha, indice) {
     let dataFormatada = "-";
-    let dataISO = ""; 
-    
-    // CORREÇÃO DA DATA: Formata no servidor para evitar 'undefined' no navegador
     if (linha[5]) { 
       try {
         const dataObj = (linha[5] instanceof Date) ? linha[5] : new Date(linha[5]);
         if (!isNaN(dataObj.getTime())) {
-          dataFormatada = Utilities.formatDate(dataObj, Session.getScriptTimeZone(), "dd/MM/yyyy");
-          dataISO = dataObj.toISOString().split('T')[0]; 
+          dataFormatada = Utilities.formatDate(dataObj, "GMT-3", "dd/MM/yyyy");
         }
-      } catch (e) { 
-        dataFormatada = String(linha[5]); 
-      }
+      } catch (e) { dataFormatada = String(linha[5]); }
     }
 
     return {
@@ -56,10 +47,8 @@ function getDadosDashboard() {
       oc: String(linha[3] || ""),
       aplic: String(linha[4] || ""),
       dataParaExibir: dataFormatada,
-      dataISO: dataISO,
       qtd: Number(linha[6]) || 0,
-      parecer: linha[7] ? String(linha[7]).trim() : "Sem Parecer",
-      anexosHtml: (linha[8] || linha[9]) ? "Sim" : "-"
+      parecer: linha[7] ? String(linha[7]).trim() : "Sem Parecer"
     };
   });
 }
