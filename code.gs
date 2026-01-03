@@ -35,7 +35,7 @@ function getDadosDashboard() {
     let dataFormatada = "-";
     let dataISO = ""; 
     
-    // Tratamento de Data (Coluna F / Índice 5) para evitar erro 'undefined'
+    // CORREÇÃO DA DATA: Formata no servidor para evitar 'undefined' no navegador
     if (linha[5]) { 
       try {
         const dataObj = (linha[5] instanceof Date) ? linha[5] : new Date(linha[5]);
@@ -59,7 +59,6 @@ function getDadosDashboard() {
       dataISO: dataISO,
       qtd: Number(linha[6]) || 0,
       parecer: linha[7] ? String(linha[7]).trim() : "Sem Parecer",
-      // Links de anexos processados como strings
       anexosHtml: (linha[8] || linha[9]) ? "Sim" : "-"
     };
   });
