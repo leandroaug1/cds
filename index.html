@@ -32,6 +32,7 @@
     
     #loader { position: fixed; top:0; left:0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); z-index: 9999; display: none; flex-direction: column; justify-content: center; align-items: center; }
     .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--bi-blue); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
     #modalForm { display:none; position:fixed; z-index:1000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.6); }
     .modal-content { background:white; margin:2% auto; padding:25px; width:420px; border-radius:12px; max-height: 90vh; overflow-y: auto; }
   </style>
@@ -130,6 +131,9 @@
         dadosOriginais = res;
         renderizar(res);
         document.getElementById('loader').style.display = 'none';
+    }).catch(e => {
+        alert("Erro ao carregar dados. Verifique a URL do Script.");
+        document.getElementById('loader').style.display = 'none';
     });
   }
 
@@ -143,7 +147,7 @@
       <tr>
         <td>${d.cd}</td><td>${d.os}</td><td>${d.pn}</td><td>${d.oc}</td><td>${d.aplic}</td>
         <td>${d.dataExibicao}</td><td>${d.qtd}</td>
-        <td style="font-weight:bold; color:${d.parecer === 'Procedente' ? 'var(--bi-green)' : 'var(--bi-red)'}">${d.parecer}</td>
+        <td style="font-weight:bold; color:${d.parecer === 'Procedente' ? '#00ce64' : '#e81123'}">${d.parecer}</td>
         <td>
           ${d.anexo1 ? `<a href="${d.anexo1}" target="_blank">Foto</a>` : ''}
           ${d.anexo2 ? `<a href="${d.anexo2}" target="_blank">Doc</a>` : ''}
@@ -193,7 +197,7 @@
     const aplicMap = {};
     dados.forEach(d => { aplicMap[d.aplic] = (aplicMap[d.aplic] || 0) + 1; });
     const bData = google.visualization.arrayToDataTable([['Aplicação', 'Qtd'], ...Object.entries(aplicMap).sort((a,b) => b[1]-a[1])]);
-    new google.visualization.BarChart(document.getElementById('bar_aplic')).draw(bData, {title: 'Ocorrências por Aplicação', colors:['#004a99'], legend:'none', chartArea:{width:'70%',height:'80%'}});
+    new google.visualization.BarChart(document.getElementById('bar_aplic')).draw(bData, {title: 'Por Aplicação', colors:['#004a99'], legend:'none', chartArea:{width:'70%',height:'80%'}});
   }
 
   async function enviar() {
