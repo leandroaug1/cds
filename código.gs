@@ -1,4 +1,4 @@
-// Configurações do Projeto
+// Configurações extraídas do seu projeto
 const ID_PLANILHA = "1rU7ETLF7vxQY3mQNFjVSpVmWts6lcZltzb22GQWy9sQ";
 const ID_PASTA_DRIVE = "1uCQrm_OyCz_O7QT6AhWdGlFD-HmOeYn_";
 
@@ -9,7 +9,7 @@ function doGet() {
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
 
-// Interface de API para o GitHub Pages
+// Ponto de entrada da API para o GitHub
 function doPost(e) {
   try {
     var request = JSON.parse(e.postData.contents);
@@ -43,11 +43,11 @@ function getDadosDashboard() {
   
   return dados.map(function(linha, indice) {
     var dataFormatada = "";
+    // CORREÇÃO DA DATA: Formata como texto no servidor
     if (linha[5]) {
       try {
-        // CORREÇÃO: Garante que a data seja lida e formatada como texto DD/MM/AAAA
         dataFormatada = Utilities.formatDate(new Date(linha[5]), Session.getScriptTimeZone(), "dd/MM/yyyy");
-      } catch (e) { dataFormatada = "Erro Data"; }
+      } catch (e) { dataFormatada = linha[5].toString(); }
     }
 
     var linkImg = linha[8] ? linha[8].toString() : "";
@@ -63,7 +63,7 @@ function getDadosDashboard() {
       pn: linha[2] || "",
       oc: linha[3] || "",
       aplic: linha[4] || "",
-      dataVisual: dataFormatada, // Chave única para leitura no HTML
+      dataParaExibir: dataFormatada, // Chave usada no HTML
       qtd: Number(linha[6]) || 0,
       parecer: linha[7] ? linha[7].toString().trim() : "",
       anexosHtml: htmlLinks || "-"
@@ -74,8 +74,7 @@ function getDadosDashboard() {
 function salvarDados(form) {
   var ss = SpreadsheetApp.openById(ID_PLANILHA);
   var sheet = ss.getSheetByName("ControleCds");
-  var linhaDados = [form.cd, form.os, form.pn, form.oc, form.aplic, form.data, form.qtd, form.parecer, form.linkImgAntigo || "", form.linkPptAntigo || ""];
-
+  var linhaDados = [form.cd, form.os, form.pn, form.oc, form.aplic, form.data, form.qtd, form.parecer, "", ""];
   if (form.idLinha) {
     sheet.getRange(parseInt(form.idLinha), 1, 1, 10).setValues([linhaDados]);
     return "Registro atualizado!";
