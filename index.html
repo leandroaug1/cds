@@ -6,13 +6,12 @@
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
   <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
   <style>
-    /* Estilos baseados no dashboard original */
     body { font-family: 'Roboto', sans-serif; background-color: #f4f6f8; margin: 0; }
     #loading { position: fixed; width: 100%; height: 100%; background: rgba(255,255,255,0.9); z-index: 999; display: flex; justify-content: center; align-items: center; flex-direction: column; }
     .header { background: #2c3e50; color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; }
     .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; padding: 20px; }
     .card { background: white; padding: 20px; border-radius: 6px; border-left: 5px solid #3498db; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-    .charts-row { display: flex; gap: 20px; padding: 0 20px; height: 400px; }
+    .charts-row { display: flex; gap: 20px; padding: 0 20px; height: 450px; }
     .chart-box { background: white; border-radius: 6px; padding: 15px; flex: 1; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
     table { width: 97%; margin: 20px auto; border-collapse: collapse; background: white; font-size: 12px; }
     th { background: #f8f9fa; padding: 12px; text-align: left; border-bottom: 2px solid #eee; }
@@ -21,11 +20,11 @@
 </head>
 <body>
 
-  <div id="loading"><p>Carregando SAP Dashboard...</p></div>
+  <div id="loading"><h3>Sincronizando com Banco de Dados...</h3></div>
 
   <div class="header">
-    <h1><span class="material-icons">analytics</span> SAP Quality Dashboard</h1>
-    <button onclick="abrirNovo()" style="background:#f1c40f; border:none; padding:10px 20px; cursor:pointer; font-weight:bold; border-radius:4px">Novo Registro</button>
+    <h1>SAP Quality Dashboard</h1>
+    <button onclick="iniciar()" style="background:#f1c40f; border:none; padding:10px 20px; cursor:pointer; font-weight:bold; border-radius:4px">Atualizar Dados</button>
   </div>
 
   <div class="kpi-grid">
@@ -58,6 +57,7 @@
     }
 
     function iniciar() {
+      document.getElementById('loading').style.display = 'flex';
       apiCall('getDados').then(dados => {
         dadosBrutos = dados;
         document.getElementById('loading').style.display = 'none';
@@ -72,7 +72,7 @@
       document.getElementById('kpi-proc').innerText = dadosBrutos.filter(d => d.parecer === "Procedente").length;
       document.getElementById('kpi-nproc').innerText = dadosBrutos.filter(d => d.parecer.includes("Não")).length;
 
-      // Tabela corrigida (sem undefined)
+      // Tabela CORRIGIDA para ler a chave dataVisual
       const html = dadosBrutos.map(d => `
         <tr>
           <td>${d.cd}</td><td>${d.os}</td><td>${d.pn}</td><td>${d.aplic}</td>
@@ -85,23 +85,41 @@
     }
 
     function desenharGraficos() {
-      // Gráfico de Rosca (Parecer)
+      // Gráfico de Parecer Técnico (Rosca)
       var proc = dadosBrutos.filter(d => d.parecer === "Procedente").length;
       var nProc = dadosBrutos.filter(d => d.parecer.includes("Não")).length;
-      var dataRosca = google.visualization.arrayToDataTable([['S', 'Q'], ['Procedente', proc], ['Não Procedente', nProc]]);
+      
+      var dataRosca = google.visualization.arrayToDataTable([
+        ['Status', 'Quantidade'], 
+        ['Procedente', proc], 
+        ['Não Procedente', nProc]
+      ]);
+      
       new google.visualization.PieChart(document.getElementById('div_rosca')).draw(dataRosca, {
-        pieHole: 0.6, title: 'Parecer Técnico', colors: ['#00ce64', '#f1c40f'], chartArea: {width:'90%', height:'75%'}, legend: 'bottom'
+        pieHole: 0.6, 
+        title: 'Parecer Técnico', 
+        colors: ['#00ce64', '#f1c40f'], // Verde e Amarelo
+        chartArea: {width:'90%', height:'75%'}, 
+        legend: {position: 'bottom'}
       });
 
-      // Gráfico de Barras (Ocorrências)
+      // Gráfico de Top Ocorrências (Barras)
       var apps = {};
       dadosBrutos.forEach(d => { apps[d.aplic] = (apps[d.aplic] || 0) + 1; });
       var barData = new google.visualization.DataTable();
-      barData.addColumn('string', 'App'); barData.addColumn('number', 'Qtd'); barData.addColumn({type:'string', role:'annotation'});
-      Object.keys(apps).sort((a,b)=>apps[b]-apps[a]).slice(0,10).forEach(k => barData.addRow([k, apps[k], apps[k].toString()]));
+      barData.addColumn('string', 'App'); 
+      barData.addColumn('number', 'Qtd'); 
+      barData.addColumn({type:'string', role:'annotation'});
+      
+      Object.keys(apps).sort((a,b)=>apps[b]-apps[a]).slice(0,10).forEach(k => {
+        barData.addRow([k, apps[k], apps[k].toString()]);
+      });
       
       new google.visualization.ColumnChart(document.getElementById('div_barras')).draw(barData, {
-        title: 'Top Aplicações', colors: ['#2c3e50'], legend: 'none', chartArea: {width:'85%', height:'70%'}
+        title: 'Top 10 Aplicações', 
+        colors: ['#2c3e50'], // Azul Escuro
+        legend: 'none', 
+        chartArea: {width:'85%', height:'70%'}
       });
     }
   </script>
