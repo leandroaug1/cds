@@ -6,31 +6,39 @@
   <title>Escapes Aero</title>
   <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
   <style>
-    :root { --bi-blue: #004a99; --bi-gray: #f3f2f1; --bi-green: #00ce64; --bi-yellow: #f2c811; --bi-red: #e81123; }
+    :root { --bi-blue: #004a99; --bi-gray: #f3f2f1; --bi-green: #00ce64; --bi-yellow: #f2c811; --bi-red: #e81123; --bi-light: #e7f0ff; }
     body { font-family: 'Segoe UI', sans-serif; background: var(--bi-gray); margin: 0; }
     .header { background: var(--bi-blue); color: white; padding: 15px 25px; display: flex; justify-content: space-between; align-items: center; }
     .btn-new { background: var(--bi-green); color: white; border: none; padding: 10px 18px; cursor: pointer; font-weight: bold; border-radius: 6px; }
+    
     .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; padding: 15px; }
     .kpi-card { background: white; padding: 15px; border-radius: 8px; text-align: center; border-top: 5px solid var(--bi-blue); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
     .kpi-value { font-size: 26px; font-weight: bold; margin-top: 5px; }
-    .chart-container { background: white; margin: 0 15px 15px; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); height: 350px; }
+    
+    .charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 0 15px 15px; }
+    .chart-box { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); height: 300px; }
+    
+    .filter-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 10px; padding: 15px; background: #fff; margin: 0 15px 15px; border-radius: 8px; }
+    .filter-row input, .filter-row select { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; font-size: 12px; }
+
     .table-container { background: white; margin: 0 15px 20px; border-radius: 8px; overflow-x: auto; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-    table { width: 100%; border-collapse: collapse; font-size: 13px; }
-    th { background: #f8f9fa; padding: 12px; text-align: left; color: var(--bi-blue); border-bottom: 2px solid #eee; }
+    table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    th { background: #f8f9fa; padding: 10px; text-align: left; color: var(--bi-blue); border-bottom: 2px solid #eee; }
     td { padding: 10px; border-bottom: 1px solid #f1f3f4; }
+    
     #loader { position: fixed; top:0; left:0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); z-index: 9999; display: none; flex-direction: column; justify-content: center; align-items: center; }
     .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--bi-blue); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
     #modalForm { display:none; position:fixed; z-index:1000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.6); }
-    .modal-content { background:white; margin:2% auto; padding:25px; width:450px; border-radius:12px; max-height: 90vh; overflow-y: auto; }
+    .modal-content { background:white; margin:2% auto; padding:25px; width:420px; border-radius:12px; max-height: 90vh; overflow-y: auto; }
     .form-group { margin-bottom: 10px; }
     .form-group label { display:block; font-size: 12px; font-weight: bold; margin-bottom: 2px; }
-    .form-group input, .form-group select { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+    .form-group input, .form-group select { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
   </style>
 </head>
 <body>
 
-<div id="loader"><div class="spinner"></div><h3 id="loaderTxt" style="margin-top:15px">Processando...</h3></div>
+<div id="loader"><div class="spinner"></div><h3 id="loaderTxt" style="margin-top:15px">Carregando...</h3></div>
 
 <div class="header">
   <h2 style="margin:0">Escapes Aero</h2>
@@ -47,7 +55,23 @@
   <div class="kpi-card">NÃO PROC.<div id="k-nproc" class="kpi-value" style="color:var(--bi-yellow)">-</div></div>
 </div>
 
-<div class="chart-container" id="chart_div"></div>
+<div class="charts-row">
+  <div class="chart-box" id="pie_parecer"></div>
+  <div class="chart-box" id="bar_aplic"></div>
+</div>
+
+<div class="filter-row">
+  <input type="text" id="fil-cd" placeholder="Filtrar CD" onkeyup="filtrarTabela()">
+  <input type="text" id="fil-os" placeholder="Filtrar OS" onkeyup="filtrarTabela()">
+  <input type="text" id="fil-pn" placeholder="Filtrar PN" onkeyup="filtrarTabela()">
+  <input type="text" id="fil-oc" placeholder="Filtrar OC" onkeyup="filtrarTabela()">
+  <input type="text" id="fil-aplic" placeholder="Filtrar Aplic" onkeyup="filtrarTabela()">
+  <select id="fil-parecer" onchange="filtrarTabela()">
+    <option value="">Parecer: Todos</option>
+    <option value="Procedente">Procedente</option>
+    <option value="Não Procedente">Não Procedente</option>
+  </select>
+</div>
 
 <div class="table-container">
   <table>
@@ -76,10 +100,10 @@
           <option value="Não Procedente">Não Procedente</option>
         </select>
       </div>
-      <div class="form-group"><label>Anexo 1:</label><input type="file" id="f1"></div>
-      <div class="form-group"><label>Anexo 2:</label><input type="file" id="f2"></div>
-      <button type="button" onclick="enviar()" class="btn-new" style="width:100%; margin-top:10px">SALVAR NA PLANILHA</button>
-      <button type="button" onclick="fecharModal()" style="width:100%; margin-top:10px; background:none; border:none; color:gray; cursor:pointer">Cancelar</button>
+      <div class="form-group"><label>Anexo 1 (Foto):</label><input type="file" id="f1"></div>
+      <div class="form-group"><label>Anexo 2 (Doc):</label><input type="file" id="f2"></div>
+      <button type="button" onclick="enviar()" class="btn-new" style="width:100%; margin-top:15px">SALVAR NA PLANILHA</button>
+      <button type="button" onclick="fecharModal()" style="width:100%; background:none; border:none; color:gray; cursor:pointer; margin-top:10px">Cancelar</button>
     </form>
   </div>
 </div>
@@ -97,32 +121,71 @@
       .then(r => r.json())
       .then(res => {
         dadosOriginais = res;
-        renderizar();
-        desenharGrafico();
+        renderizar(res);
         document.getElementById('loader').style.display = 'none';
       });
   }
 
-  function desenharGrafico() {
-    const resumo = {};
-    dadosOriginais.forEach(d => {
-      if(!resumo[d.aplic]) resumo[d.aplic] = { proc: 0, nproc: 0 };
-      if(d.parecer === "Procedente") resumo[d.aplic].proc++;
-      else resumo[d.aplic].nproc++;
-    });
+  function renderizar(dados) {
+    // KPIs
+    document.getElementById('k-total').innerText = dados.length;
+    document.getElementById('k-escape').innerText = dados.reduce((a, b) => a + (Number(b.qtd) || 0), 0);
+    document.getElementById('k-proc').innerText = dados.filter(d => d.parecer === "Procedente").length;
+    document.getElementById('k-nproc').innerText = dados.filter(d => d.parecer.includes("Não")).length;
 
-    const dataArray = [['Aplicação', 'Procedente', 'Não Procedente']];
-    for(let a in resumo) dataArray.push([a, resumo[a].proc, resumo[a].nproc]);
+    // Tabela
+    document.getElementById('corpoTabela').innerHTML = dados.map(d => `
+      <tr>
+        <td>${d.cd}</td><td>${d.os}</td><td>${d.pn}</td><td>${d.oc}</td><td>${d.aplic}</td>
+        <td>${d.data}</td><td>${d.qtd}</td>
+        <td style="font-weight:bold; color:${d.parecer === 'Procedente' ? 'var(--bi-green)' : 'var(--bi-red)'}">${d.parecer}</td>
+        <td>
+          ${d.anexo1 ? `<a href="${d.anexo1}" target="_blank">Foto</a>` : ''}
+          ${d.anexo2 ? `<a href="${d.anexo2}" target="_blank">Doc</a>` : ''}
+        </td>
+      </tr>
+    `).join('');
 
-    const data = google.visualization.arrayToDataTable(dataArray);
-    const options = {
-      title: 'Resumo por Aplicação e Parecer',
-      isStacked: true,
-      colors: ['#00ce64', '#e81123'],
-      legend: { position: 'top' }
-    };
-    const chart = new google.visualization.ColumnChart(document.getElementById('chart_div'));
-    chart.draw(data, options);
+    // Gráficos
+    desenharGraficos(dados);
+  }
+
+  function filtrarTabela() {
+    const cd = document.getElementById('fil-cd').value.toLowerCase();
+    const os = document.getElementById('fil-os').value.toLowerCase();
+    const pn = document.getElementById('fil-pn').value.toLowerCase();
+    const oc = document.getElementById('fil-oc').value.toLowerCase();
+    const aplic = document.getElementById('fil-aplic').value.toLowerCase();
+    const parecer = document.getElementById('fil-parecer').value;
+
+    const filtrados = dadosOriginais.filter(d => 
+      d.cd.toLowerCase().includes(cd) &&
+      d.os.toLowerCase().includes(os) &&
+      d.pn.toLowerCase().includes(pn) &&
+      d.oc.toLowerCase().includes(oc) &&
+      d.aplic.toLowerCase().includes(aplic) &&
+      (parecer === "" || d.parecer === parecer)
+    );
+    renderizar(filtrados);
+  }
+
+  function desenharGraficos(dados) {
+    // Pizza Parecer
+    const pData = google.visualization.arrayToDataTable([
+      ['Parecer', 'Qtd'],
+      ['Procedente', dados.filter(d => d.parecer === "Procedente").length],
+      ['Não Procedente', dados.filter(d => d.parecer.includes("Não")).length]
+    ]);
+    new google.visualization.PieChart(document.getElementById('pie_parecer')).draw(pData, {title: 'Distribuição por Parecer', colors:['#00ce64', '#e81123']});
+
+    // Barra Aplicação
+    const aplicMap = {};
+    dados.forEach(d => { aplicMap[d.aplic] = (aplicMap[d.aplic] || 0) + 1; });
+    const bData = google.visualization.arrayToDataTable([
+      ['Aplicação', 'Qtd'],
+      ...Object.entries(aplicMap).sort((a,b) => b[1] - a[1])
+    ]);
+    new google.visualization.BarChart(document.getElementById('bar_aplic')).draw(bData, {title: 'Ocorrências por Aplicação', colors:['#004a99']});
   }
 
   async function enviar() {
@@ -144,39 +207,16 @@
     };
 
     fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) })
-      .then(() => {
-        alert("Salvo com sucesso!");
-        document.getElementById('meuForm').reset();
-        fecharModal();
-        iniciar();
-      })
-      .catch(err => alert("Erro ao salvar: " + err))
+      .then(() => { alert("Sucesso!"); document.getElementById('meuForm').reset(); fecharModal(); iniciar(); })
+      .catch(e => alert("Erro: " + e))
       .finally(() => document.getElementById('loader').style.display = 'none');
   }
 
-  const toBase64 = file => new Promise((resolve) => {
+  const toBase64 = file => new Promise(res => {
     const reader = new FileReader();
     reader.readAsDataURL(file);
-    reader.onload = () => resolve(reader.result);
+    reader.onload = () => res(reader.result);
   });
-
-  function renderizar() {
-    document.getElementById('k-total').innerText = dadosOriginais.length;
-    document.getElementById('k-escape').innerText = dadosOriginais.reduce((a, b) => a + (Number(b.qtd) || 0), 0);
-    document.getElementById('k-proc').innerText = dadosOriginais.filter(d => d.parecer === "Procedente").length;
-    document.getElementById('k-nproc').innerText = dadosOriginais.filter(d => d.parecer.includes("Não")).length;
-
-    document.getElementById('corpoTabela').innerHTML = dadosOriginais.map(d => `
-      <tr>
-        <td>${d.cd}</td><td>${d.os}</td><td>${d.pn}</td><td>${d.oc}</td><td>${d.aplic}</td>
-        <td>${d.data}</td><td>${d.qtd}</td><td>${d.parecer}</td>
-        <td>
-          ${d.anexo1 ? `<a href="${d.anexo1}" target="_blank">Foto</a>` : ''}
-          ${d.anexo2 ? `<a href="${d.anexo2}" target="_blank">Doc</a>` : ''}
-        </td>
-      </tr>
-    `).join('');
-  }
 
   function abrirModal() { document.getElementById('modalForm').style.display = 'block'; }
   function fecharModal() { document.getElementById('modalForm').style.display = 'none'; }
