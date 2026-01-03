@@ -1,12 +1,15 @@
 const ID_PLANILHA = "1rU7ETLF7vxQY3mQNFjVSpVmWts6lcZltzb22GQWy9sQ";
 
+/**
+ * Função para gerar saída JSON com suporte a CORS
+ */
 function GerarSaida(objeto) {
   return ContentService.createTextOutput(JSON.stringify(objeto))
     .setMimeType(ContentService.MimeType.JSON);
 }
 
 function doGet(e) {
-  // Se houver parâmetro ?api=true, retorna JSON para o GitHub
+  // Se houver um parâmetro 'api', retorna JSON, caso contrário, retorna a página HTML
   if (e.parameter.api) {
     return GerarSaida(getDadosDashboard());
   }
@@ -29,7 +32,7 @@ function getDadosDashboard() {
     let dataFormatada = "-";
     let dataISO = ""; 
     
-    // Tratamento de Data para evitar "undefined"
+    // Tratamento robusto de Data para evitar "undefined"
     if (linha[5]) { 
       try {
         const dataObj = (linha[5] instanceof Date) ? linha[5] : new Date(linha[5]);
