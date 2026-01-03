@@ -1,0 +1,134 @@
+function doGet() {
+  return HtmlService.createTemplateFromFile('Index')
+    .evaluate()
+    .setTitle('SAP Quality Dashboard')
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+}
+
+function onOpen() {
+  SpreadsheetApp.getUi()
+    .createMenu('📊 SAP Dashboard')
+    .addItem('Abrir Painel', 'abrirDashboard')
+    .addToUi();
+}
+
+function abrirDashboard() {
+  var html = HtmlService.createTemplateFromFile('Index')
+    .evaluate()
+    .setWidth(1200)
+    .setHeight(900);
+  SpreadsheetApp.getUi().showModalDialog(html, 'SAP Quality Dashboard');
+}
+
+function getDadosDashboard() {
+  try {
+    var idPlanilha = "1rU7ETLF7vxQY3mQNFjVSpVmWts6lcZltzb22GQWy9sQ"; 
+    var ss = SpreadsheetApp.openById(idPlanilha);
+    var sheet = ss.getSheetByName("ControleCds");
+
+    if (!sheet) return [];
+
+    var dados = sheet.getDataRange().getValues();
+    if (dados.length <= 1) return [];
+
+    var dadosCabecalho = dados.shift(); 
+
+    var dadosEstruturados = dados.map(function(linha, indice) {
+      var linhaReal = indice + 2; 
+
+      var dataFormatada = "";
+      if (linha[5]) {
+        try {
+          if (linha[5] instanceof Date) {
+            dataFormatada = Utilities.formatDate(linha[5], Session.getScriptTimeZone(), "yyyy-MM-dd");
+          } else {
+            dataFormatada = linha[5].toString();
+          }
+        } catch (e) { dataFormatada = ""; }
+      }
+      
+      var dataVisual = dataFormatada;
+      if(dataFormatada.includes("-")) {
+         var partes = dataFormatada.split("-");
+         if(partes.length === 3) dataVisual = partes[2] + "/" + partes[1] + "/" + partes[0];
+      }
+
+      var linkImg = linha[8] ? linha[8].toString() : "";
+      var linkPpt = linha[9] ? linha[9].toString() : "";
+      var htmlLinks = "";
+      if (linkImg.toLowerCase().includes("http")) htmlLinks += '<a href="' + linkImg + '" target="_blank" style="text-decoration:none; margin-right:8px; font-size:16px">📷</a>';
+      if (linkPpt.toLowerCase().includes("http")) htmlLinks += '<a href="' + linkPpt + '" target="_blank" style="text-decoration:none; font-size:16px">📄</a>';
+      if (htmlLinks === "") htmlLinks = "-";
+
+      return {
+        idLinha: linhaReal,
+        cd: linha[0] ? linha[0].toString() : "",
+        os: linha[1] ? linha[1].toString() : "",
+        pn: linha[2] ? linha[2].toString() : "",
+        oc: linha[3] ? linha[3].toString() : "",
+        aplic: linha[4] ? linha[4].toString() : "",
+        dataInput: dataFormatada,
+        dataVisual: dataVisual,
+        qtd: (typeof linha[6] === 'number' ? linha[6] : 0),
+        parecer: linha[7] ? linha[7].toString().trim() : "",
+        linkImg: linkImg,
+        linkPpt: linkPpt,
+        anexosHtml: htmlLinks
+      };
+    });
+
+    return dadosEstruturados;
+
+  } catch (erro) {
+    throw new Error("Erro no Google Script: " + erro.message);
+  }
+}
+
+function salvarDados(form) {
+  var idPlanilha = "1rU7ETLF7vxQY3mQNFjVSpVmWts6lcZltzb22GQWy9sQ"; 
+  var idPastaDrive = "1uCQrm_OyCz_O7QT6AhWdGlFD-HmOeYn_"; 
+
+  var ss = SpreadsheetApp.openById(idPlanilha);
+  var sheet = ss.getSheetByName("ControleCds");
+  var folder = DriveApp.getFolderById(idPastaDrive);
+
+  // Processa Imagem
+  var urlImgFinal = form.linkImgAntigo; 
+  if (form.arquivoImg && form.arquivoImg.data) {
+    var blobImg = Utilities.newBlob(Utilities.base64Decode(form.arquivoImg.data), form.arquivoImg.mimeType, form.arquivoImg.name);
+    var arqImg = folder.createFile(blobImg);
+    arqImg.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW); 
+    urlImgFinal = arqImg.getUrl();
+  }
+
+  // Processa PPT
+  var urlPptFinal = form.linkPptAntigo; 
+  if (form.arquivoPpt && form.arquivoPpt.data) {
+    var blobPpt = Utilities.newBlob(Utilities.base64Decode(form.arquivoPpt.data), form.arquivoPpt.mimeType, form.arquivoPpt.name);
+    var arqPpt = folder.createFile(blobPpt);
+    arqPpt.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW); 
+    urlPptFinal = arqPpt.getUrl();
+  }
+  
+  var linhaDados = [
+    form.cd,
+    form.os,
+    form.pn,
+    form.oc,
+    form.aplic,
+    form.data, 
+    form.qtd,
+    form.parecer,
+    urlImgFinal, 
+    urlPptFinal
+  ];
+
+  if (form.idLinha && form.idLinha != "") {
+    var numLinha = parseInt(form.idLinha);
+    sheet.getRange(numLinha, 1, 1, 10).setValues([linhaDados]);
+    return "Registro atualizado com sucesso!";
+  } else {
+    sheet.appendRow(linhaDados);
+    return "Novo registro criado com sucesso!";
+  }
+}
