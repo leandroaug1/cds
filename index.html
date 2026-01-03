@@ -50,11 +50,14 @@
 </div>
 
 <script>
-  // ATENÇÃO: COLOQUE AQUI A URL DE IMPLANTAÇÃO (EX: https://script.google.com/macros/s/.../exec)
-  const WEB_APP_URL = "SUA_URL_DO_WEB_APP_AQUI"; 
+  /**
+   * PASSO 3: COLOQUE ABAIXO A SUA URL DE IMPLANTAÇÃO EXATA
+   * Deve terminar em /exec
+   */
+  const WEB_APP_URL = "SUA_URL_AQUI/exec"; 
   
   var dadosOriginais = [];
-  var filtroClique = null; // Armazena a categoria clicada no gráfico para Cross-Filtering
+  var filtroClique = null;
 
   google.charts.load('current', {'packages':['corechart']});
   google.charts.setOnLoadCallback(iniciar);
@@ -62,7 +65,7 @@
   async function iniciar() {
     document.getElementById('loader').style.display = 'flex';
     
-    // Verifica se está rodando no Google Script ou no GitHub
+    // Detecção de ambiente
     if (typeof google !== 'undefined' && google.script && google.script.run) {
       google.script.run.withSuccessHandler(res => { 
         dadosOriginais = res; 
@@ -70,12 +73,14 @@
       }).getDadosDashboard();
     } else {
       try {
+        // O parâmetro ?api=true força o Google a retornar JSON puro
         const response = await fetch(WEB_APP_URL + "?api=true");
         if (!response.ok) throw new Error('Falha na rede');
         dadosOriginais = await response.json();
         finalizarCarga();
       } catch (err) {
-        alert("Erro de conexão com a API: " + err);
+        console.error(err);
+        alert("Erro de conexão. Verifique se a Implantação está como 'Qualquer Pessoa'.");
       }
     }
   }
@@ -86,18 +91,15 @@
   }
 
   function renderizar() {
-    // Lógica Central de Filtragem Cruzada (Power BI Style)
     let filtrados = dadosOriginais.filter(d => {
       return !filtroClique || d.parecer.toLowerCase() === filtroClique.toLowerCase();
     });
 
-    // Atualização dos KPIs superiores conforme o filtro
     document.getElementById('k-total').innerText = filtrados.length;
     document.getElementById('k-escape').innerText = filtrados.reduce((a, b) => a + b.qtd, 0);
     document.getElementById('k-proc').innerText = filtrados.filter(d => d.parecer.toLowerCase() === "procedente").length;
     document.getElementById('k-nproc').innerText = filtrados.filter(d => d.parecer.toLowerCase().includes("não")).length;
 
-    // Atualização da Tabela de detalhamento
     document.getElementById('corpoTabela').innerHTML = filtrados.map(d => `
       <tr><td>${d.cd}</td><td>${d.os}</td><td>${d.pn}</td><td>${d.aplic}</td>
       <td>${d.dataParaExibir}</td><td><b>${d.qtd}</b></td><td>${d.parecer}</td></tr>
@@ -107,27 +109,22 @@
   }
 
   function desenharGraficos(dadosFiltrados) {
-    // Dados para o gráfico de rosca (mantém o contexto geral para permitir novas seleções)
     const p = dadosOriginais.filter(d => d.parecer.toLowerCase() === "procedente").length;
     const np = dadosOriginais.filter(d => d.parecer.toLowerCase().includes("não")).length;
-    const dataR = google.visualization.arrayToDataTable([['Status', 'Qtd'], ['Procedente', p], ['Não Procedente', np]]);
+    const dataR = google.visualization.arrayToDataTable([['S', 'Q'], ['Procedente', p], ['Não Procedente', np]]);
     
     const chartR = new google.visualization.PieChart(document.getElementById('div_rosca'));
-
-    // Escutador de eventos para o filtro cruzado
-    google.visualization.events.addListener(chartR, 'select', function() {
-      const selection = chartR.getSelection()[0];
-      filtroClique = selection ? dataR.getValue(selection.row, 0) : null;
-      renderizar(); // Força a atualização de todos os KPIs e tabelas
+    google.visualization.events.addListener(chartR, 'select', () => {
+      const sel = chartR.getSelection()[0];
+      filtroClique = sel ? dataR.getValue(sel.row, 0) : null;
+      renderizar();
     });
-
     chartR.draw(dataR, { pieHole: 0.5, title: 'Filtro por Parecer (Clique p/ Filtrar)', colors: ['#00ce64', '#f2c811'], legend: 'bottom' });
 
-    // Gráfico de Barras - Atualiza conforme o contexto filtrado
     const apps = {};
     dadosFiltrados.forEach(d => { if(d.aplic) apps[d.aplic] = (apps[d.aplic] || 0) + 1; });
     const dataB = new google.visualization.DataTable();
-    dataB.addColumn('string', 'Aplicação'); dataB.addColumn('number', 'Qtd');
+    dataB.addColumn('string', 'App'); dataB.addColumn('number', 'Qtd');
     Object.keys(apps).sort((a,b)=>apps[b]-apps[a]).slice(0,10).forEach(k => dataB.addRow([k, apps[k]]));
 
     new google.visualization.BarChart(document.getElementById('div_barras')).draw(dataB, {
