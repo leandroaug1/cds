@@ -7,27 +7,65 @@
   <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
     :root { --bi-blue: #004a99; --bi-gray: #f3f2f1; --bi-green: #00ce64; --bi-yellow: #f2c811; --bi-red: #e81123; }
-    body { font-family: 'Segoe UI', sans-serif; background: var(--bi-gray); margin: 0; padding-bottom: 30px; }
+    body { font-family: 'Segoe UI', sans-serif; background: var(--bi-gray); margin: 0; }
     .header { background: var(--bi-blue); color: white; padding: 12px 25px; display: flex; justify-content: space-between; align-items: center; }
+    .btn-new { background: var(--bi-green); color: white; border: none; padding: 10px 15px; cursor: pointer; font-weight: bold; border-radius: 4px; }
     .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; padding: 15px; }
-    .kpi-card { background: white; padding: 15px; border-radius: 4px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-top: 5px solid var(--bi-blue); }
+    .kpi-card { background: white; padding: 15px; border-radius: 4px; text-align: center; border-top: 5px solid var(--bi-blue); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
     .kpi-value { font-size: 26px; font-weight: bold; margin-top: 5px; }
-    .visuals-container { display: flex; gap: 12px; padding: 0 15px; height: 380px; margin-bottom: 15px; }
-    .chart-box { background: white; flex: 1; border-radius: 4px; padding: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-    .table-container { background: white; margin: 0 15px; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); overflow-x: auto; }
+    .visuals-container { display: flex; gap: 12px; padding: 0 15px; height: 350px; margin-bottom: 15px; }
+    .chart-box { background: white; flex: 1; border-radius: 4px; padding: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+    .table-container { background: white; margin: 0 15px; border-radius: 4px; overflow-x: auto; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
     table { width: 100%; border-collapse: collapse; font-size: 12px; }
-    th { background: #faf9f8; padding: 10px; text-align: left; border-bottom: 2px solid #eee; }
-    td { padding: 8px 10px; border-bottom: 1px solid #f1f3f4; }
-    #loader { position: fixed; width: 100%; height: 100%; background: white; z-index: 999; display: flex; justify-content: center; align-items: center; }
+    th { background: #faf9f8; padding: 12px; text-align: left; border-bottom: 2px solid #eee; }
+    td { padding: 10px; border-bottom: 1px solid #f1f3f4; }
+    .btn-anexo { background: #eee; padding: 4px 8px; text-decoration: none; color: #333; border-radius: 3px; font-size: 10px; margin-right: 2px; border: 1px solid #ccc; }
+    
+    /* MODAL FORMULÁRIO */
+    #modalForm { display:none; position:fixed; z-index:1000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.5); }
+    .modal-content { background:white; margin:5% auto; padding:20px; width:400px; border-radius:8px; }
+    .form-group { margin-bottom: 10px; }
+    .form-group label { display:block; font-size: 12px; font-weight: bold; }
+    .form-group input, .form-group select { width: 100%; padding: 8px; box-sizing: border-box; }
+    #loader { position: fixed; width: 100%; height: 100%; background: rgba(255,255,255,0.8); z-index: 9999; display: flex; justify-content: center; align-items: center; }
   </style>
 </head>
 <body>
 
-<div id="loader"><h3>Sincronizando Dados...</h3></div>
+<div id="loader"><h3>A processar...</h3></div>
+
+<div id="modalForm">
+  <div class="modal-content">
+    <h3 style="margin-top:0">Novo Registro Quality</h3>
+    <form id="meuForm">
+      <div class="form-group"><label>CD:</label><input type="text" name="cd" required></div>
+      <div class="form-group"><label>OS:</label><input type="text" name="os"></div>
+      <div class="form-group"><label>PN:</label><input type="text" name="pn"></div>
+      <div class="form-group"><label>OC:</label><input type="text" name="oc"></div>
+      <div class="form-group"><label>Aplicação:</label><input type="text" name="aplic"></div>
+      <div class="form-group"><label>Data:</label><input type="date" name="data" required></div>
+      <div class="form-group"><label>Qtd:</label><input type="number" name="qtd" value="1"></div>
+      <div class="form-group">
+        <label>Parecer:</label>
+        <select name="parecer">
+          <option value="Procedente">Procedente</option>
+          <option value="Não Procedente">Não Procedente</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Link Anexo 1:</label><input type="text" name="anexo1"></div>
+      <div class="form-group"><label>Link Anexo 2:</label><input type="text" name="anexo2"></div>
+      <button type="button" onclick="salvar()" class="btn-new" style="width:100%">SALVAR NA PLANILHA</button>
+      <button type="button" onclick="fecharModal()" style="width:100%; background:#ccc; margin-top:5px; border:none; padding:8px; border-radius:4px; cursor:pointer">Cancelar</button>
+    </form>
+  </div>
+</div>
 
 <div class="header">
   <h3 style="margin:0">SAP Quality Analytics</h3>
-  <button onclick="iniciar()" style="background:var(--bi-yellow); border:none; padding:8px 15px; cursor:pointer; font-weight:bold; border-radius:4px">Atualizar</button>
+  <div>
+    <button class="btn-new" onclick="abrirModal()">+ NOVO REGISTRO</button>
+    <button onclick="iniciar()" style="background:var(--bi-yellow); border:none; padding:10px 15px; cursor:pointer; font-weight:bold; border-radius:4px">ATUALIZAR</button>
+  </div>
 </div>
 
 <div class="kpi-row">
@@ -44,18 +82,13 @@
 
 <div class="table-container">
   <table>
-    <thead><tr><th>CD</th><th>OS</th><th>PN</th><th>APLICAÇÃO</th><th>DATA</th><th>QTD</th><th>PARECER</th></tr></thead>
+    <thead><tr><th>CD</th><th>OS</th><th>PN</th><th>DATA</th><th>QTD</th><th>PARECER</th><th>ANEXOS</th></tr></thead>
     <tbody id="corpoTabela"></tbody>
   </table>
 </div>
 
 <script>
-  /**
-   * INSTRUÇÃO: Cole abaixo a URL da sua implantação (Web App) do Apps Script.
-   * Deve terminar em /exec.
-   */
-  const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwZ0aaF_nK7i6EQVQXtdt2tLfk9ZrmJfgA2SSo5CEG2BvXafljmNspM1GG9_C-iJjkp/exec"; 
-  
+  const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwZ0aaF_nK7i6EQVQXtdt2tLfk9ZrmJfgA2SSo5CEG2BvXafljmNspM1GG9_C-iJjkp/exec";
   var dadosOriginais = [];
   var filtroClique = null;
 
@@ -64,73 +97,81 @@
 
   async function iniciar() {
     document.getElementById('loader').style.display = 'flex';
-    
-    // Tenta detectar se está rodando no ambiente do Google Apps Script
-    if (typeof google !== 'undefined' && google.script && google.script.run) {
-      google.script.run.withSuccessHandler(res => { 
-        dadosOriginais = res; 
-        document.getElementById('loader').style.display = 'none';
-        renderizar();
-      }).getDadosDashboard();
-    } else {
-      // Caso contrário, busca os dados via API fetch (para o GitHub Pages)
-      try {
+    try {
+      if (typeof google !== 'undefined' && google.script && google.script.run) {
+        google.script.run.withSuccessHandler(res => { dadosOriginais = res; renderizar(); }).getDadosDashboard();
+      } else {
         const response = await fetch(WEB_APP_URL + "?api=true");
         dadosOriginais = await response.json();
-        document.getElementById('loader').style.display = 'none';
         renderizar();
-      } catch (err) {
-        alert("Erro ao carregar dados da API. Verifique as permissões de implantação.");
       }
-    }
+    } catch (e) { alert("Erro ao carregar: " + e); }
+    document.getElementById('loader').style.display = 'none';
   }
 
   function renderizar() {
-    // Filtro Cruzado (Power BI Style)
-    let filtrados = dadosOriginais.filter(d => {
-      return !filtroClique || d.parecer.toLowerCase() === filtroClique.toLowerCase();
-    });
-
-    // Atualiza KPIs (Quadrados respondem ao filtro)
+    let filtrados = dadosOriginais.filter(d => !filtroClique || d.parecer.toLowerCase() === filtroClique.toLowerCase());
+    
     document.getElementById('k-total').innerText = filtrados.length;
     document.getElementById('k-escape').innerText = filtrados.reduce((a, b) => a + b.qtd, 0);
     document.getElementById('k-proc').innerText = filtrados.filter(d => d.parecer.toLowerCase() === "procedente").length;
     document.getElementById('k-nproc').innerText = filtrados.filter(d => d.parecer.toLowerCase().includes("não")).length;
 
-    // Atualiza Tabela
-    document.getElementById('corpoTabela').innerHTML = filtrados.map(d => `
-      <tr><td>${d.cd}</td><td>${d.os}</td><td>${d.pn}</td><td>${d.aplic}</td>
-      <td>${d.dataParaExibir}</td><td><b>${d.qtd}</b></td><td>${d.parecer}</td></tr>
-    `).join('');
+    document.getElementById('corpoTabela').innerHTML = filtrados.map(d => {
+      let links = "";
+      if(d.anexo1) links += `<a href="${d.anexo1}" target="_blank" class="btn-anexo">Doc 1</a>`;
+      if(d.anexo2) links += `<a href="${d.anexo2}" target="_blank" class="btn-anexo">Doc 2</a>`;
+      
+      return `<tr>
+        <td>${d.cd}</td><td>${d.os}</td><td>${d.pn}</td><td>${d.data}</td>
+        <td>${d.qtd}</td><td>${d.parecer}</td><td>${links}</td>
+      </tr>`;
+    }).join('');
 
     desenharGraficos(filtrados);
   }
 
-  function desenharGraficos(dadosFiltrados) {
+  function desenharGraficos(filtrados) {
     const p = dadosOriginais.filter(d => d.parecer.toLowerCase() === "procedente").length;
     const np = dadosOriginais.filter(d => d.parecer.toLowerCase().includes("não")).length;
     const dataR = google.visualization.arrayToDataTable([['S', 'Q'], ['Procedente', p], ['Não Procedente', np]]);
-    
     const chartR = new google.visualization.PieChart(document.getElementById('div_rosca'));
-    
-    // Adiciona o listener de seleção para o filtro
     google.visualization.events.addListener(chartR, 'select', () => {
       const sel = chartR.getSelection()[0];
       filtroClique = sel ? dataR.getValue(sel.row, 0) : null;
-      renderizar(); // Atualiza todo o dashboard ao clicar
+      renderizar();
     });
-
-    chartR.draw(dataR, { pieHole: 0.5, title: 'Parecer (Clique p/ Filtrar)', colors: ['#00ce64', '#f2c811'], legend: 'bottom' });
+    chartR.draw(dataR, { pieHole: 0.5, title: 'Filtro por Parecer', colors: ['#00ce64', '#f2c811'], legend: 'bottom' });
 
     const apps = {};
-    dadosFiltrados.forEach(d => { if(d.aplic) apps[d.aplic] = (apps[d.aplic] || 0) + 1; });
+    filtrados.forEach(d => { if(d.aplic) apps[d.aplic] = (apps[d.aplic] || 0) + 1; });
     const dataB = new google.visualization.DataTable();
     dataB.addColumn('string', 'App'); dataB.addColumn('number', 'Qtd');
-    Object.keys(apps).sort((a,b)=>apps[b]-apps[a]).slice(0,10).forEach(k => dataB.addRow([k, apps[k]]));
+    Object.keys(apps).sort((a,b)=>apps[b]-apps[a]).slice(0,8).forEach(k => dataB.addRow([k, apps[k]]));
+    new google.visualization.BarChart(document.getElementById('div_barras')).draw(dataB, { title: 'Top Aplicações', colors: ['#004a99'], legend: 'none' });
+  }
 
-    new google.visualization.BarChart(document.getElementById('div_barras')).draw(dataB, {
-      title: 'Top 10 Aplicações (Filtrado)', colors: ['#004a99'], legend: 'none', chartArea: {width:'60%', height:'80%'}
-    });
+  // FUNÇÕES DO MODAL
+  function abrirModal() { document.getElementById('modalForm').style.display = 'block'; }
+  function fecharModal() { document.getElementById('modalForm').style.display = 'none'; }
+
+  function salvar() {
+    const f = document.getElementById('meuForm');
+    const obj = {
+      cd: f.cd.value, os: f.os.value, pn: f.pn.value, oc: f.oc.value,
+      aplic: f.aplic.value, data: f.data.value, qtd: f.qtd.value,
+      parecer: f.parecer.value, anexo1: f.anexo1.value, anexo2: f.anexo2.value
+    };
+    
+    if(!obj.cd || !obj.data) return alert("CD e Data são obrigatórios!");
+
+    document.getElementById('loader').style.display = 'flex';
+    if (typeof google !== 'undefined' && google.script && google.script.run) {
+      google.script.run.withSuccessHandler(() => { alert("Salvo!"); f.reset(); fecharModal(); iniciar(); }).salvarDados(obj);
+    } else {
+      alert("A função de salvar requer execução dentro do Google Apps Script (Web App). No GitHub Pages, esta função está limitada.");
+      document.getElementById('loader').style.display = 'none';
+    }
   }
 </script>
 </body>
