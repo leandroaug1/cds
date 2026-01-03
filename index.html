@@ -119,6 +119,7 @@
 </div>
 
 <script>
+  // ATENÇÃO: Certifique-se de que a URL abaixo é a do seu Web App atualizado (terminada em /exec)
   const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwZ0aaF_nK7i6EQVQXtdt2tLfk9ZrmJfgA2SSo5CEG2BvXafljmNspM1GG9_C-iJjkp/exec"; 
   let dadosOriginais = [];
 
@@ -143,6 +144,7 @@
     document.getElementById('k-proc').innerText = dados.filter(d => d.parecer === "Procedente").length;
     document.getElementById('k-nproc').innerText = dados.filter(d => d.parecer.includes("Não")).length;
 
+    // Correção: Usando dataExibicao para evitar 'undefined'
     document.getElementById('corpoTabela').innerHTML = dados.map(d => `
       <tr>
         <td>${d.cd}</td><td>${d.os}</td><td>${d.pn}</td><td>${d.oc}</td><td>${d.aplic}</td>
@@ -172,9 +174,11 @@
       const matchCampos = d.cd.toLowerCase().includes(cd) && d.os.toLowerCase().includes(os) &&
                           d.pn.toLowerCase().includes(pn) && d.oc.toLowerCase().includes(oc) &&
                           d.aplic.toLowerCase().includes(aplic) && (parecer === "" || d.parecer === parecer);
+      
       let matchData = true;
       if(start) matchData = matchData && (d.dataRaw >= start);
       if(end) matchData = matchData && (d.dataRaw <= end);
+      
       return matchCampos && matchData;
     });
     renderizar(filtrados);
@@ -197,7 +201,7 @@
     const aplicMap = {};
     dados.forEach(d => { aplicMap[d.aplic] = (aplicMap[d.aplic] || 0) + 1; });
     const bData = google.visualization.arrayToDataTable([['Aplicação', 'Qtd'], ...Object.entries(aplicMap).sort((a,b) => b[1]-a[1])]);
-    new google.visualization.BarChart(document.getElementById('bar_aplic')).draw(bData, {title: 'Por Aplicação', colors:['#004a99'], legend:'none', chartArea:{width:'70%',height:'80%'}});
+    new google.visualization.BarChart(document.getElementById('bar_aplic')).draw(bData, {title: 'Ocorrências por Aplicação', colors:['#004a99'], legend:'none', chartArea:{width:'70%',height:'80%'}});
   }
 
   async function enviar() {
