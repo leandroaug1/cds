@@ -1,5 +1,8 @@
 const ID_PLANILHA = "1rU7ETLF7vxQY3mQNFjVSpVmWts6lcZltzb22GQWy9sQ";
 
+/**
+ * Função GET: Responsável por enviar os dados da planilha para o site no GitHub.
+ */
 function doGet(e) {
   try {
     const dados = getDadosDashboard();
@@ -11,13 +14,16 @@ function doGet(e) {
   }
 }
 
+/**
+ * Função POST: Recebe os novos registros e anexos enviados pelo site.
+ */
 function doPost(e) {
   try {
     const data = JSON.parse(e.postData.contents);
     const ss = SpreadsheetApp.openById(ID_PLANILHA);
     const sheet = ss.getSheetByName("ControleCds");
     
-    // Processamento de anexos (Base64 para Drive)
+    // Converte os anexos Base64 em links reais do Google Drive
     let url1 = data.anexo1Base64 ? uploadParaDrive(data.anexo1Base64, data.anexo1Nome) : "";
     let url2 = data.anexo2Base64 ? uploadParaDrive(data.anexo2Base64, data.anexo2Nome) : "";
 
@@ -39,7 +45,7 @@ function getDadosDashboard() {
   const ss = SpreadsheetApp.openById(ID_PLANILHA);
   const sheet = ss.getSheetByName("ControleCds");
   const dados = sheet.getDataRange().getValues();
-  dados.shift(); // Remove cabeçalho
+  dados.shift(); // Remove o cabeçalho
 
   return dados.map(linha => ({
     cd: String(linha[0] || ""),
@@ -60,6 +66,6 @@ function uploadParaDrive(base64Data, fileName) {
   const bytes = Utilities.base64Decode(base64Data.split(',')[1]);
   const blob = Utilities.newBlob(bytes, contentType, fileName);
   const file = DriveApp.getRootFolder().createFile(blob);
-  file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+  file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW); // Permite visualização externa
   return file.getUrl();
 }
