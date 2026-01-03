@@ -10,23 +10,35 @@
     body { font-family: 'Segoe UI', sans-serif; background: var(--bi-gray); margin: 0; }
     .header { background: var(--bi-blue); color: white; padding: 15px 25px; display: flex; justify-content: space-between; align-items: center; }
     .btn-new { background: var(--bi-green); color: white; border: none; padding: 10px 18px; cursor: pointer; font-weight: bold; border-radius: 6px; }
+    
+    /* Filtros Power BI */
     .date-filter-bar { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 10px; background: #fff; border-bottom: 1px solid #ddd; font-size: 13px; }
     .date-filter-bar input { border: 1px solid #ccc; border-radius: 4px; padding: 4px 8px; font-size: 12px; }
+    .btn-action-small { background: #f8f9fa; border: 1px solid #ccc; padding: 4px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; }
+
     .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; padding: 15px; }
     .kpi-card { background: white; padding: 15px; border-radius: 8px; text-align: center; border-top: 5px solid var(--bi-blue); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
     .kpi-value { font-size: 26px; font-weight: bold; margin-top: 5px; }
+    
     .charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 0 15px 15px; }
     .chart-box { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); height: 300px; }
+    
     .filter-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 10px; padding: 10px 15px; background: #fff; margin: 0 15px 10px; border-radius: 8px; }
     .filter-row input, .filter-row select { width: 100%; padding: 6px; border: 1px solid #ddd; border-radius: 4px; font-size: 12px; }
+
     .table-container { background: white; margin: 0 15px 20px; border-radius: 8px; overflow-x: auto; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
     table { width: 100%; border-collapse: collapse; font-size: 12px; }
     th { background: #f8f9fa; padding: 10px; text-align: left; color: var(--bi-blue); border-bottom: 2px solid #eee; }
     td { padding: 10px; border-bottom: 1px solid #f1f3f4; }
+    
     #loader { position: fixed; top:0; left:0; width: 100%; height: 100%; background: rgba(255,255,255,0.8); z-index: 9999; display: none; flex-direction: column; justify-content: center; align-items: center; }
     .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--bi-blue); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
     #modalForm { display:none; position:fixed; z-index:1000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.6); }
     .modal-content { background:white; margin:2% auto; padding:25px; width:420px; border-radius:12px; max-height: 90vh; overflow-y: auto; }
+    .form-group { margin-bottom: 10px; }
+    .form-group label { display:block; font-size: 12px; font-weight: bold; margin-bottom: 2px; }
+    .form-group input, .form-group select { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
   </style>
 </head>
 <body>
@@ -46,8 +58,8 @@
   <input type="date" id="date-start">
   <span>até</span>
   <input type="date" id="date-end">
-  <button onclick="filtrarTabela()" style="padding: 4px 10px; cursor: pointer;">Filtrar</button>
-  <button onclick="limparFiltroData()" style="padding: 4px 10px; cursor: pointer;">Limpar</button>
+  <button class="btn-action-small" onclick="filtrarTabela()">Filtrar Período</button>
+  <button class="btn-action-small" onclick="limparFiltroData()">Limpar</button>
 </div>
 
 <div class="kpi-row">
@@ -84,6 +96,32 @@
   </table>
 </div>
 
+<div id="modalForm">
+  <div class="modal-content">
+    <h3>Novo Registro Escapes Aero</h3>
+    <form id="meuForm">
+      <div class="form-group"><label>CD:</label><input type="text" id="in-cd" required></div>
+      <div class="form-group"><label>OS:</label><input type="text" id="in-os"></div>
+      <div class="form-group"><label>PN:</label><input type="text" id="in-pn"></div>
+      <div class="form-group"><label>OC:</label><input type="text" id="in-oc"></div>
+      <div class="form-group"><label>Aplicação:</label><input type="text" id="in-aplic"></div>
+      <div class="form-group"><label>Data:</label><input type="date" id="in-data" required></div>
+      <div class="form-group"><label>Qtd:</label><input type="number" id="in-qtd" value="1"></div>
+      <div class="form-group">
+        <label>Parecer:</label>
+        <select id="in-parecer">
+          <option value="Procedente">Procedente</option>
+          <option value="Não Procedente">Não Procedente</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Anexo 1 (Foto):</label><input type="file" id="f1"></div>
+      <div class="form-group"><label>Anexo 2 (Doc):</label><input type="file" id="f2"></div>
+      <button type="button" onclick="enviar()" class="btn-new" style="width:100%; margin-top:10px">SALVAR NA PLANILHA</button>
+      <button type="button" onclick="fecharModal()" style="width:100%; background:none; border:none; color:gray; cursor:pointer; margin-top:10px">Cancelar</button>
+    </form>
+  </div>
+</div>
+
 <script>
   const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwZ0aaF_nK7i6EQVQXtdt2tLfk9ZrmJfgA2SSo5CEG2BvXafljmNspM1GG9_C-iJjkp/exec"; 
   let dadosOriginais = [];
@@ -97,6 +135,9 @@
         dadosOriginais = res;
         renderizar(res);
         document.getElementById('loader').style.display = 'none';
+    }).catch(e => {
+        alert("Erro ao carregar dados.");
+        document.getElementById('loader').style.display = 'none';
     });
   }
 
@@ -106,7 +147,6 @@
     document.getElementById('k-proc').innerText = dados.filter(d => d.parecer === "Procedente").length;
     document.getElementById('k-nproc').innerText = dados.filter(d => d.parecer.includes("Não")).length;
 
-    // CORREÇÃO: USANDO dataExibicao
     document.getElementById('corpoTabela').innerHTML = dados.map(d => `
       <tr>
         <td>${d.cd}</td><td>${d.os}</td><td>${d.pn}</td><td>${d.oc}</td><td>${d.aplic}</td>
@@ -122,21 +162,86 @@
     desenharGraficos(dados);
   }
 
+  function filtrarTabela() {
+    const cd = document.getElementById('fil-cd').value.toLowerCase();
+    const os = document.getElementById('fil-os').value.toLowerCase();
+    const pn = document.getElementById('fil-pn').value.toLowerCase();
+    const oc = document.getElementById('fil-oc').value.toLowerCase();
+    const aplic = document.getElementById('fil-aplic').value.toLowerCase();
+    const parecer = document.getElementById('fil-parecer').value;
+    const start = document.getElementById('date-start').value;
+    const end = document.getElementById('date-end').value;
+
+    const filtrados = dadosOriginais.filter(d => {
+      const matchCampos = d.cd.toLowerCase().includes(cd) && d.os.toLowerCase().includes(os) &&
+                          d.pn.toLowerCase().includes(pn) && d.oc.toLowerCase().includes(oc) &&
+                          d.aplic.toLowerCase().includes(aplic) && (parecer === "" || d.parecer === parecer);
+      
+      let matchData = true;
+      if(start) matchData = matchData && (d.dataRaw >= start);
+      if(end) matchData = matchData && (d.dataRaw <= end);
+      
+      return matchCampos && matchData;
+    });
+    renderizar(filtrados);
+  }
+
+  function limparFiltroData() {
+    document.getElementById('date-start').value = "";
+    document.getElementById('date-end').value = "";
+    filtrarTabela();
+  }
+
   function desenharGraficos(dados) {
     const pData = google.visualization.arrayToDataTable([
       ['Parecer', 'Qtd'],
       ['Procedente', dados.filter(d => d.parecer === "Procedente").length],
       ['Não Procedente', dados.filter(d => d.parecer.includes("Não")).length]
     ]);
-    new google.visualization.PieChart(document.getElementById('pie_parecer')).draw(pData, {title: 'Pareceres', colors:['#00ce64', '#e81123']});
+    new google.visualization.PieChart(document.getElementById('pie_parecer')).draw(pData, {title: 'Pareceres', colors:['#00ce64', '#e81123'], chartArea:{width:'90%',height:'80%'}});
 
     const aplicMap = {};
     dados.forEach(d => { aplicMap[d.aplic] = (aplicMap[d.aplic] || 0) + 1; });
     const bData = google.visualization.arrayToDataTable([['Aplicação', 'Qtd'], ...Object.entries(aplicMap).sort((a,b) => b[1]-a[1])]);
-    new google.visualization.BarChart(document.getElementById('bar_aplic')).draw(bData, {title: 'Por Aplicação', colors:['#004a99'], legend:'none'});
+    new google.visualization.BarChart(document.getElementById('bar_aplic')).draw(bData, {title: 'Ocorrências por Aplicação', colors:['#004a99'], legend:'none', chartArea:{width:'70%',height:'80%'}});
   }
 
-  // Funções de filtro e envio continuam conforme os blocos anteriores
+  async function enviar() {
+    const f = document.getElementById('meuForm');
+    if(!document.getElementById('in-cd').value || !document.getElementById('in-data').value) return alert("CD e Data são obrigatórios!");
+    
+    document.getElementById('loader').style.display = 'flex';
+    document.getElementById('loaderTxt').innerText = "Salvando...";
+
+    const payload = {
+      cd: document.getElementById('in-cd').value,
+      os: document.getElementById('in-os').value,
+      pn: document.getElementById('in-pn').value,
+      oc: document.getElementById('in-oc').value,
+      aplic: document.getElementById('in-aplic').value,
+      data: document.getElementById('in-data').value,
+      qtd: document.getElementById('in-qtd').value,
+      parecer: document.getElementById('in-parecer').value,
+      anexo1Base64: document.getElementById('f1').files[0] ? await toBase64(document.getElementById('f1').files[0]) : null,
+      anexo1Nome: document.getElementById('f1').files[0] ? document.getElementById('f1').files[0].name : "",
+      anexo2Base64: document.getElementById('f2').files[0] ? await toBase64(document.getElementById('f2').files[0]) : null,
+      anexo2Nome: document.getElementById('f2').files[0] ? document.getElementById('f2').files[0].name : ""
+    };
+
+    fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) })
+      .then(() => { alert("Sucesso!"); f.reset(); fecharModal(); iniciar(); })
+      .catch(e => alert("Erro: " + e))
+      .finally(() => document.getElementById('loader').style.display = 'none');
+  }
+
+  const toBase64 = file => new Promise(res => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => res(reader.result);
+  });
+
+  function abrirModal() { document.getElementById('modalForm').style.display = 'block'; }
+  function fecharModal() { document.getElementById('modalForm').style.display = 'none'; }
 </script>
 </body>
 </html>
