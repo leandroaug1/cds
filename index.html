@@ -3,8 +3,8 @@
 <head>
   <base target="_top">
   <meta charset="UTF-8">
-  <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;600;700&display=swap" rel="stylesheet">
   <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
     :root { --bi-blue: #004a99; --bi-gray: #f3f2f1; --bi-green: #00ce64; --bi-yellow: #f2c811; --bi-red: #e81123; }
     body { font-family: 'Segoe UI', sans-serif; background: var(--bi-gray); margin: 0; padding-bottom: 30px; }
@@ -23,11 +23,11 @@
 </head>
 <body>
 
-<div id="loader"><h3>Sincronizando...</h3></div>
+<div id="loader"><h3>Sincronizando Dados...</h3></div>
 
 <div class="header">
   <h3 style="margin:0">SAP Quality Analytics</h3>
-  <button onclick="iniciar()" style="background:var(--bi-yellow); border:none; padding:8px 15px; cursor:pointer; font-weight:bold; border-radius:4px">Sincronizar</button>
+  <button onclick="iniciar()" style="background:var(--bi-yellow); border:none; padding:8px 15px; cursor:pointer; font-weight:bold; border-radius:4px">Atualizar</button>
 </div>
 
 <div class="kpi-row">
@@ -51,10 +51,10 @@
 
 <script>
   /**
-   * PASSO 3: COLOQUE ABAIXO A SUA URL DE IMPLANTAÇÃO EXATA
-   * Deve terminar em /exec
+   * INSTRUÇÃO: Cole abaixo a URL da sua implantação (Web App) do Apps Script.
+   * Deve terminar em /exec.
    */
-  const WEB_APP_URL = "SUA_URL_AQUI/exec"; 
+  const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwZ0aaF_nK7i6EQVQXtdt2tLfk9ZrmJfgA2SSo5CEG2BvXafljmNspM1GG9_C-iJjkp/exec"; 
   
   var dadosOriginais = [];
   var filtroClique = null;
@@ -65,41 +65,39 @@
   async function iniciar() {
     document.getElementById('loader').style.display = 'flex';
     
-    // Detecção de ambiente
+    // Tenta detectar se está rodando no ambiente do Google Apps Script
     if (typeof google !== 'undefined' && google.script && google.script.run) {
       google.script.run.withSuccessHandler(res => { 
         dadosOriginais = res; 
-        finalizarCarga(); 
+        document.getElementById('loader').style.display = 'none';
+        renderizar();
       }).getDadosDashboard();
     } else {
+      // Caso contrário, busca os dados via API fetch (para o GitHub Pages)
       try {
-        // O parâmetro ?api=true força o Google a retornar JSON puro
         const response = await fetch(WEB_APP_URL + "?api=true");
-        if (!response.ok) throw new Error('Falha na rede');
         dadosOriginais = await response.json();
-        finalizarCarga();
+        document.getElementById('loader').style.display = 'none';
+        renderizar();
       } catch (err) {
-        console.error(err);
-        alert("Erro de conexão. Verifique se a Implantação está como 'Qualquer Pessoa'.");
+        alert("Erro ao carregar dados da API. Verifique as permissões de implantação.");
       }
     }
   }
 
-  function finalizarCarga() {
-    document.getElementById('loader').style.display = 'none';
-    renderizar();
-  }
-
   function renderizar() {
+    // Filtro Cruzado (Power BI Style)
     let filtrados = dadosOriginais.filter(d => {
       return !filtroClique || d.parecer.toLowerCase() === filtroClique.toLowerCase();
     });
 
+    // Atualiza KPIs (Quadrados respondem ao filtro)
     document.getElementById('k-total').innerText = filtrados.length;
     document.getElementById('k-escape').innerText = filtrados.reduce((a, b) => a + b.qtd, 0);
     document.getElementById('k-proc').innerText = filtrados.filter(d => d.parecer.toLowerCase() === "procedente").length;
     document.getElementById('k-nproc').innerText = filtrados.filter(d => d.parecer.toLowerCase().includes("não")).length;
 
+    // Atualiza Tabela
     document.getElementById('corpoTabela').innerHTML = filtrados.map(d => `
       <tr><td>${d.cd}</td><td>${d.os}</td><td>${d.pn}</td><td>${d.aplic}</td>
       <td>${d.dataParaExibir}</td><td><b>${d.qtd}</b></td><td>${d.parecer}</td></tr>
@@ -114,12 +112,15 @@
     const dataR = google.visualization.arrayToDataTable([['S', 'Q'], ['Procedente', p], ['Não Procedente', np]]);
     
     const chartR = new google.visualization.PieChart(document.getElementById('div_rosca'));
+    
+    // Adiciona o listener de seleção para o filtro
     google.visualization.events.addListener(chartR, 'select', () => {
       const sel = chartR.getSelection()[0];
       filtroClique = sel ? dataR.getValue(sel.row, 0) : null;
-      renderizar();
+      renderizar(); // Atualiza todo o dashboard ao clicar
     });
-    chartR.draw(dataR, { pieHole: 0.5, title: 'Filtro por Parecer (Clique p/ Filtrar)', colors: ['#00ce64', '#f2c811'], legend: 'bottom' });
+
+    chartR.draw(dataR, { pieHole: 0.5, title: 'Parecer (Clique p/ Filtrar)', colors: ['#00ce64', '#f2c811'], legend: 'bottom' });
 
     const apps = {};
     dadosFiltrados.forEach(d => { if(d.aplic) apps[d.aplic] = (apps[d.aplic] || 0) + 1; });
