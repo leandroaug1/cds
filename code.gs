@@ -6,7 +6,7 @@ function doGet(e) {
     return ContentService.createTextOutput(JSON.stringify(dados))
       .setMimeType(ContentService.MimeType.JSON);
   } catch (err) {
-    return ContentService.createTextOutput(JSON.stringify({ "error": err.toString() }))
+    return ContentService.createTextOutput(JSON.stringify({ "status": "erro", "msg": err.toString() }))
       .setMimeType(ContentService.MimeType.JSON);
   }
 }
@@ -17,6 +17,7 @@ function doPost(e) {
     const ss = SpreadsheetApp.openById(ID_PLANILHA);
     const sheet = ss.getSheetByName("ControleCds");
     
+    // Processamento de anexos (Base64 para Drive)
     let url1 = data.anexo1Base64 ? uploadParaDrive(data.anexo1Base64, data.anexo1Nome) : "";
     let url2 = data.anexo2Base64 ? uploadParaDrive(data.anexo2Base64, data.anexo2Nome) : "";
 
@@ -38,7 +39,7 @@ function getDadosDashboard() {
   const ss = SpreadsheetApp.openById(ID_PLANILHA);
   const sheet = ss.getSheetByName("ControleCds");
   const dados = sheet.getDataRange().getValues();
-  const cabecalho = dados.shift(); 
+  dados.shift(); // Remove cabeçalho
 
   return dados.map(linha => ({
     cd: String(linha[0] || ""),
