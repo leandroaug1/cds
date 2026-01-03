@@ -17,7 +17,6 @@ function doPost(e) {
     const ss = SpreadsheetApp.openById(ID_PLANILHA);
     const sheet = ss.getSheetByName("ControleCds");
     
-    // Processamento de anexos para o Drive
     let url1 = data.anexo1Base64 ? uploadParaDrive(data.anexo1Base64, data.anexo1Nome) : "";
     let url2 = data.anexo2Base64 ? uploadParaDrive(data.anexo2Base64, data.anexo2Nome) : "";
 
@@ -39,7 +38,7 @@ function getDadosDashboard() {
   const ss = SpreadsheetApp.openById(ID_PLANILHA);
   const sheet = ss.getSheetByName("ControleCds");
   const dados = sheet.getDataRange().getValues();
-  dados.shift(); // Remove cabeçalho
+  dados.shift(); 
 
   return dados.map(linha => ({
     cd: String(linha[0] || ""),
