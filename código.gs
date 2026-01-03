@@ -1,4 +1,4 @@
-// Configurações Globais
+// Configurações extraídas do seu projeto original
 const ID_PLANILHA = "1rU7ETLF7vxQY3mQNFjVSpVmWts6lcZltzb22GQWy9sQ";
 const ID_PASTA_DRIVE = "1uCQrm_OyCz_O7QT6AhWdGlFD-HmOeYn_";
 
@@ -9,13 +9,16 @@ function doGet() {
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
 
-// FUNÇÃO ESSENCIAL PARA O GITHUB PAGES
+/**
+ * Ponto de entrada para requisições externas (API)
+ * Essencial para funcionamento fora do ambiente Google (ex: GitHub Pages)
+ */
 function doPost(e) {
-  var request = JSON.parse(e.postData.contents);
-  var action = request.action;
-  var payload = request.data;
-
   try {
+    var request = JSON.parse(e.postData.contents);
+    var action = request.action;
+    var payload = request.data;
+
     if (action === 'getDados') {
       var dados = getDadosDashboard();
       return ContentService.createTextOutput(JSON.stringify(dados))
