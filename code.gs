@@ -48,7 +48,7 @@ function getDadosDashboard() {
       pn: String(linha[2] || ""),
       oc: String(linha[3] || ""),
       aplic: String(linha[4] || ""),
-      // Correção da Data: Enviando chaves consistentes para o Frontend
+      // Propriedades de data sincronizadas
       dataRaw: d instanceof Date ? d.toISOString().split('T')[0] : "", 
       dataExibicao: d instanceof Date ? Utilities.formatDate(d, "GMT-3", "dd/MM/yyyy") : String(d || "-"),
       qtd: Number(linha[6]) || 0,
