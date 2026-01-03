@@ -1,14 +1,28 @@
 const ID_PLANILHA = "1rU7ETLF7vxQY3mQNFjVSpVmWts6lcZltzb22GQWy9sQ";
 
+/**
+ * Rota GET: Retorna os dados para o Dashboard ou processa salvamento simples
+ */
 function doGet(e) {
-  if (e.parameter.api) {
-    const dados = getDadosDashboard();
-    return ContentService.createTextOutput(JSON.stringify(dados)).setMimeType(ContentService.MimeType.JSON);
+  // Se houver parâmetro 'dados', estamos tentando salvar
+  if (e.parameter.action === 'salvar') {
+    return salvarDadosExterno(e.parameter);
   }
-  return HtmlService.createTemplateFromFile('index').evaluate()
-    .setTitle('SAP Quality Analytics')
-    .addMetaTag('viewport', 'width=device-width, initial-scale=1')
-    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+
+  // Caso contrário, retorna os dados para o Dashboard
+  const dados = getDadosDashboard();
+  return ContentService.createTextOutput(JSON.stringify(dados))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+/**
+ * Rota POST: Para receber arquivos (Base64) e objetos grandes
+ */
+function doPost(e) {
+  const params = JSON.parse(e.postData.contents);
+  const resultado = salvarDados(params);
+  return ContentService.createTextOutput(JSON.stringify({result: resultado}))
+    .setMimeType(ContentService.MimeType.JSON);
 }
 
 function getDadosDashboard() {
@@ -17,42 +31,30 @@ function getDadosDashboard() {
   const dados = sheet.getDataRange().getValues();
   dados.shift(); // Remove cabeçalho
 
-  return dados.map(function(linha) {
-    let dataFormatada = "-";
-    if (linha[5]) {
-      try {
-        const d = (linha[5] instanceof Date) ? linha[5] : new Date(linha[5]);
-        dataFormatada = Utilities.formatDate(d, "GMT-3", "dd/MM/yyyy");
-      } catch (e) {}
-    }
-
-    return {
-      cd: String(linha[0] || ""),
-      os: String(linha[1] || ""),
-      pn: String(linha[2] || ""),
-      oc: String(linha[3] || ""),
-      aplic: String(linha[4] || ""),
-      data: dataFormatada,
-      qtd: Number(linha[6]) || 0,
-      parecer: String(linha[7] || "Sem Parecer"),
-      anexo1: String(linha[8] || ""), // Coluna I
-      anexo2: String(linha[9] || "")  // Coluna J
-    };
-  });
+  return dados.map(linha => ({
+    cd: String(linha[0] || ""),
+    os: String(linha[1] || ""),
+    pn: String(linha[2] || ""),
+    oc: String(linha[3] || ""),
+    aplic: String(linha[4] || ""),
+    data: linha[5] ? Utilities.formatDate(new Date(linha[5]), "GMT-3", "dd/MM/yyyy") : "-",
+    qtd: Number(linha[6]) || 0,
+    parecer: String(linha[7] || "Sem Parecer"),
+    anexo1: String(linha[8] || ""),
+    anexo2: String(linha[9] || "")
+  }));
 }
 
-// Função para converter arquivo em link do Drive
 function uploadParaDrive(base64Data, fileName) {
   try {
-    const folder = DriveApp.getRootFolder(); 
     const contentType = base64Data.substring(5, base64Data.indexOf(';'));
     const bytes = Utilities.base64Decode(base64Data.split(',')[1]);
     const blob = Utilities.newBlob(bytes, contentType, fileName);
-    const file = folder.createFile(blob);
+    const file = DriveApp.getRootFolder().createFile(blob);
     file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
     return file.getUrl();
   } catch (e) {
-    return "Erro no upload: " + e.toString();
+    return "";
   }
 }
 
