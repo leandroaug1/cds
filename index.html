@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+
+  <style>
+    /* Estilos Gerais */
+    body { font-family: 'Roboto', sans-serif; margin: 0; padding: 0; background-color: #f4f6f8; color: #333; }
+    #loading { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.9); z-index:999; display:flex; flex-direction:column; justify-content:center; align-items:center; color:#2c3e50; }
+    .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 10px; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+    /* CABEÇALHO */
+    .header { background-color: #2c3e50; color: white; padding: 15px 25px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+    .header h1 { margin: 0; font-size: 20px; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+    
+    /* Área de Controles do Cabeçalho */
+    .header-controls { display: flex; align-items: center; gap: 15px; }
+
+    /* Filtro de Data Discreto */
+    .date-range { display: flex; align-items: center; gap: 5px; background: rgba(255,255,255,0.1); padding: 5px 10px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.2); }
+    .date-range label { font-size: 11px; font-weight: bold; color: #ccc; margin-right: 5px; }
+    .date-input { background: transparent; border: none; color: white; font-family: 'Roboto', sans-serif; font-size: 12px; outline: none; }
+    .date-input::-webkit-calendar-picker-indicator { filter: invert(1); cursor: pointer; opacity: 0.7; }
+    .date-input:hover::-webkit-calendar-picker-indicator { opacity: 1; }
+    .separator { color: #aaa; font-size: 12px; }
+
+    /* Botões */
+    .btn { padding: 8px 16px; border-radius: 4px; border: none; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 5px; font-size: 13px; }
+    .btn-outline { background: transparent; border: 1px solid rgba(255,255,255,0.5); color: white; }
+    .btn-yellow { background-color: #f1c40f; color: #2c3e50; transition: background 0.2s; }
+    .btn-yellow:hover { background-color: #d4ac0d; }
+
+    .main-content { padding: 20px; max-width: 1200px; margin: 0 auto; }
+    .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 20px; }
+    .card { background: white; padding: 20px; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-left: 5px solid transparent; transition: transform 0.2s; cursor:default; }
+    .card:hover { transform: translateY(-2px); }
+    .card-title { font-size: 11px; color: #7f8c8d; text-transform: uppercase; font-weight: bold; margin-bottom: 5px; }
+    .card-value { font-size: 32px; font-weight: bold; }
+    .border-blue { border-left-color: #3498db; } .text-blue { color: #3498db; }
+    .border-red { border-left-color: #e74c3c; } .text-red { color: #e74c3c; }
+    .border-green { border-left-color: #2ecc71; } .text-green { color: #2ecc71; }
+    .border-yellow { border-left-color: #f1c40f; } .text-yellow { color: #f1c40f; }
+
+    .charts-row { display: flex; gap: 20px; height: 420px; margin-bottom: 20px; }
+    .chart-box { background: white; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 15px; display: flex; flex-direction: column; }
+    .box-30 { flex: 3; }
+    .box-70 { flex: 7; }
+    .chart-header { font-size: 14px; font-weight: bold; color: #2c3e50; margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 10px; display:flex; justify-content:space-between; }
+    .chart-render { flex: 1; width: 100%; }
+    .chart-hint { font-size: 10px; color: #999; font-weight: normal; }
+
+    .table-section { background: white; border-radius: 6px; padding: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .table-container { overflow-x: auto; max-height: 500px; }
+    table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    th { background-color: #f8f9fa; color: #5f6368; font-weight: bold; text-align: left; padding: 12px; border-bottom: 2px solid #e0e0e0; position: sticky; top: 0; z-index: 10; }
+    td { padding: 10px; border-bottom: 1px solid #f1f3f4; color: #333; }
+    tr:hover { background-color: #f1f2f6; }
+    a { color: #3498db; }
+
+    /* FILTROS DE TEXTO */
+    .filter-row { background-color: #e8eaed; display: none; }
+    .filter-row th { padding: 5px; background-color: #e8eaed; }
+    .column-filter { width: 90%; padding: 5px; border: 1px solid #ccc; border-radius: 4px; font-size: 11px; background: white; color: #333; }
+    .column-filter::placeholder { color: #999; }
+
+    /* MODAL */
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; display: none; justify-content: center; align-items: center; }
+    .modal-content { background: white; padding: 25px; border-radius: 8px; width: 500px; max-width: 90%; max-height: 90vh; overflow-y: auto; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+    .close-modal { cursor: pointer; font-size: 24px; color: #999; }
+    .form-group { margin-bottom: 15px; }
+    .form-group label { display: block; margin-bottom: 5px; font-size: 12px; font-weight: bold; color: #555; }
+    .form-input { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+    .form-row { display: flex; gap: 15px; }
+    .half { flex: 1; }
+    .btn-save { width: 100%; padding: 10px; background-color: #27ae60; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+    .btn-save:hover { background-color: #219150; }
+    .btn-cancel { width: 100%; padding: 10px; background-color: #95a5a6; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; margin-top: 5px; }
+    .file-status { font-size:11px; color:#3498db; margin-top:3px; display:block; }
+  </style>
+</head>
+<body>
+
+  <div id="loading">
+    <div class="spinner"></div>
+    <div>Carregando dados...</div>
+  </div>
+
+  <div class="header">
+    <h1><span class="material-icons">analytics</span> SAP Quality Dashboard</h1>
+    
+    <div class="header-controls">
+      <div class="date-range">
+        <label>DATA:</label>
+        <input type="date" id="dataInicio" class="date-input" onchange="aplicarFiltroData()">
+        <span class="separator">a</span>
+        <input type="date" id="dataFim" class="date-input" onchange="aplicarFiltroData()">
+      </div>
+
+      <button class="btn btn-outline" onclick="limparFiltrosGerais()"><span class="material-icons" style="font-size:16px">filter_alt_off</span> Limpar Tudo</button>
+      <button class="btn btn-yellow" onclick="abrirNovoRegistro()"><span class="material-icons" style="font-size:16px">add</span> Novo Registro</button>
+    </div>
+  </div>
+
+  <div class="main-content">
+    <div class="kpi-grid">
+      <div class="card border-blue"><div class="card-title">Total de Cds abertas</div><div class="card-value text-blue" id="kpi-total">-</div></div>
+      <div class="card border-red"><div class="card-title">TOTAL DE ESCAPE (PEÇAS SEGREGADAS)</div><div class="card-value text-red" id="kpi-escape">-</div></div>
+      <div class="card border-green"><div class="card-title">PROCEDENTES</div><div class="card-value text-green" id="kpi-procedentes">-</div></div>
+      <div class="card border-yellow"><div class="card-title">NÃO PROCEDENTES</div><div class="card-value text-yellow" id="kpi-nao-procedentes">-</div></div>
+    </div>
+
+    <div class="charts-row">
+      <div class="chart-box box-30">
+        <div class="chart-header">Parecer Técnico <span class="chart-hint">(Clique para filtrar)</span></div>
+        <div id="div_rosca" class="chart-render"></div>
+      </div>
+      <div class="chart-box box-70">
+        <div class="chart-header">Ocorrências por Aplicação (Top 15) <span class="chart-hint">(Clique para filtrar)</span></div>
+        <div id="div_barras" class="chart-render"></div>
+      </div>
+    </div>
+
+    <div class="table-section">
+      <div class="chart-header" style="border:none; margin:0; display:flex; align-items:center; gap:5px; margin-bottom:10px">
+        <span class="material-icons" style="font-size:18px">table_chart</span> Detalhamento
+        <button class="btn btn-outline" style="color:#555; border:1px solid #ccc; margin-left:auto" onclick="alternarFiltrosTabela()">
+           <span class="material-icons" style="font-size:16px">search</span> Pesquisar
+        </button>
+      </div>
+      
+      <div class="table-container">
+        <table id="minhaTabela">
+          <thead>
+            <tr><th>CD</th><th>OS</th><th>PN</th><th>OC</th><th>Aplic</th><th>Data</th><th>Qtd</th><th>Parecer</th><th>Anexos</th><th>Ação</th></tr>
+            
+            <tr id="linhaFiltros" class="filter-row">
+              <th><input type="text" class="column-filter" placeholder="Buscar..." onkeyup="aplicarFiltroColuna(0)"></th>
+              <th><input type="text" class="column-filter" placeholder="Buscar..." onkeyup="aplicarFiltroColuna(1)"></th>
+              <th><input type="text" class="column-filter" placeholder="Buscar..." onkeyup="aplicarFiltroColuna(2)"></th>
+              <th><input type="text" class="column-filter" placeholder="Buscar..." onkeyup="aplicarFiltroColuna(3)"></th>
+              <th><input type="text" class="column-filter" placeholder="Buscar..." onkeyup="aplicarFiltroColuna(4)"></th>
+              <th><input type="text" class="column-filter" placeholder="Buscar..." onkeyup="aplicarFiltroColuna(5)"></th>
+              <th><input type="text" class="column-filter" placeholder="Buscar..." onkeyup="aplicarFiltroColuna(6)"></th>
+              <th><input type="text" class="column-filter" placeholder="Buscar..." onkeyup="aplicarFiltroColuna(7)"></th>
+              <th></th><th></th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div style="font-size:11px; color:#999; margin-top:5px; text-align:right" id="contadorTabela"></div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modalFormulario">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="tituloModal">Novo Registro</h2>
+        <span class="close-modal" onclick="fecharModal()">&times;</span>
+      </div>
+      <form id="formRegistro">
+        <input type="hidden" id="inputIdLinha">
+        <input type="hidden" id="inputLinkImgAntigo">
+        <input type="hidden" id="inputLinkPptAntigo">
+
+        <div class="form-row">
+          <div class="form-group half"><label>Número de CD</label><input type="text" class="form-input" id="inputCd" required></div>
+          <div class="form-group half"><label>OS</label><input type="text" class="form-input" id="inputOs"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group half"><label>PN</label><input type="text" class="form-input" id="inputPn"></div>
+          <div class="form-group half"><label>OC</label><input type="text" class="form-input" id="inputOc"></div>
+        </div>
+        <div class="form-group"><label>Aplicação</label><input type="text" class="form-input" id="inputAplic" required></div>
+        <div class="form-row">
+          <div class="form-group half"><label>Data</label><input type="date" class="form-input" id="inputData" required></div>
+          <div class="form-group half"><label>Quantidade</label><input type="number" class="form-input" id="inputQtd" required></div>
+        </div>
+        <div class="form-group">
+          <label>Parecer</label>
+          <select class="form-input" id="inputParecer">
+            <option value="">Selecione...</option>
+            <option value="Procedente">Procedente</option>
+            <option value="Não Procedente">Não Procedente</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Anexar Imagem</label><input type="file" class="form-input" id="fileImg" accept="image/*"><span id="statusImg" class="file-status"></span></div>
+        <div class="form-group"><label>Anexar PPTX</label><input type="file" class="form-input" id="filePpt" accept=".pptx,.ppt,.pdf"><span id="statusPpt" class="file-status"></span></div>
+
+        <button type="button" class="btn-save" onclick="prepararEnvio()">SALVAR</button>
+        <button type="button" class="btn-cancel" onclick="fecharModal()">CANCELAR</button>
+      </form>
+    </div>
+  </div>
+
+  <script type="text/javascript">
+    google.charts.load('current', {'packages':['corechart']});
+    google.charts.setOnLoadCallback(iniciarSistema);
+
+    var dadosBrutos = [];
+    // Filtros Globais
+    var filtroGraficoParecer = null;
+    var filtroGraficoApp = null;
+    var filtrosColuna = {};
+    var filtroDataInicio = "";
+    var filtroDataFim = "";
+
+    function iniciarSistema() {
+      document.getElementById('loading').style.display = 'flex';
+      google.script.run.withSuccessHandler(receberDados).withFailureHandler(tratarErro).getDadosDashboard();
+    }
+    function tratarErro(erro) { document.getElementById('loading').innerHTML = '<div style="color:red; text-align:center">Erro: ' + erro + '</div>'; }
+    function receberDados(dados) {
+      dadosBrutos = dados;
+      document.getElementById('loading').style.display = 'none';
+      atualizarDashboard();
+    }
+
+    // --- MANIPULAÇÃO DE ARQUIVOS ---
+    function lerArquivo(fileInput) {
+      return new Promise((resolve, reject) => {
+        const file = fileInput.files[0];
+        if (!file) return resolve(null);
+        const reader = new FileReader();
+        reader.onload = e => resolve({ data: e.target.result.split(',')[1], mimeType: file.type, name: file.name });
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+
+    async function prepararEnvio() {
+      document.getElementById('modalFormulario').style.display = 'none';
+      document.getElementById('loading').style.display = 'flex';
+      try {
+        var objImg = await lerArquivo(document.getElementById('fileImg'));
+        var objPpt = await lerArquivo(document.getElementById('filePpt'));
+        var form = {
+          idLinha: document.getElementById('inputIdLinha').value,
+          cd: document.getElementById('inputCd').value,
+          os: document.getElementById('inputOs').value,
+          pn: document.getElementById('inputPn').value,
+          oc: document.getElementById('inputOc').value,
+          aplic: document.getElementById('inputAplic').value,
+          data: document.getElementById('inputData').value,
+          qtd: document.getElementById('inputQtd').value,
+          parecer: document.getElementById('inputParecer').value,
+          arquivoImg: objImg,
+          arquivoPpt: objPpt,
+          linkImgAntigo: document.getElementById('inputLinkImgAntigo').value,
+          linkPptAntigo: document.getElementById('inputLinkPptAntigo').value
+        };
+        google.script.run.withSuccessHandler(function(res) { alert(res); iniciarSistema(); }).withFailureHandler(function(err) { alert("Erro: " + err); document.getElementById('loading').style.display = 'none'; }).salvarDados(form);
+      } catch (e) { alert("Erro ao ler arquivos: " + e); document.getElementById('loading').style.display = 'none'; }
+    }
+
+    // --- FORMULÁRIO UI ---
+    function abrirNovoRegistro() {
+      document.getElementById('tituloModal').innerText = "Novo Registro";
+      document.getElementById('formRegistro').reset();
+      document.getElementById('inputIdLinha').value = "";
+      document.getElementById('inputLinkImgAntigo').value = "";
+      document.getElementById('inputLinkPptAntigo').value = "";
+      document.getElementById('statusImg').innerText = "";
+      document.getElementById('statusPpt').innerText = "";
+      document.getElementById('modalFormulario').style.display = 'flex';
+    }
+    function editarRegistro(idLinha) {
+      var item = dadosBrutos.find(d => d.idLinha == idLinha);
+      if (!item) return;
+      document.getElementById('tituloModal').innerText = "Editar Registro";
+      document.getElementById('inputIdLinha').value = item.idLinha;
+      document.getElementById('inputCd').value = item.cd;
+      document.getElementById('inputOs').value = item.os;
+      document.getElementById('inputPn').value = item.pn;
+      document.getElementById('inputOc').value = item.oc;
+      document.getElementById('inputAplic').value = item.aplic;
+      document.getElementById('inputData').value = item.dataInput;
+      document.getElementById('inputQtd').value = item.qtd;
+      document.getElementById('inputParecer').value = item.parecer;
+      document.getElementById('inputLinkImgAntigo').value = item.linkImg;
+      document.getElementById('inputLinkPptAntigo').value = item.linkPpt;
+      document.getElementById('statusImg').innerText = item.linkImg ? "Arquivo atual anexado" : "";
+      document.getElementById('statusPpt').innerText = item.linkPpt ? "Arquivo atual anexado" : "";
+      document.getElementById('fileImg').value = "";
+      document.getElementById('filePpt').value = "";
+      document.getElementById('modalFormulario').style.display = 'flex';
+    }
+    function fecharModal() { document.getElementById('modalFormulario').style.display = 'none'; }
+
+    // --- DASHBOARD LOGIC ---
+    function aplicarFiltroData() {
+       filtroDataInicio = document.getElementById('dataInicio').value;
+       filtroDataFim = document.getElementById('dataFim').value;
+       atualizarDashboard();
+    }
+
+    function atualizarDashboard() {
+      var dadosFiltrados = dadosBrutos.filter(function(item) {
+        // 1. Filtro de Data
+        var passaData = true;
+        if (filtroDataInicio && item.dataInput < filtroDataInicio) passaData = false;
+        if (filtroDataFim && item.dataInput > filtroDataFim) passaData = false;
+        
+        // 2. Filtro Gráfico
+        var passaGrafico = true;
+        if (filtroGraficoParecer) {
+           if (filtroGraficoParecer === "Não Procedente") {
+              passaGrafico = item.parecer.includes("Não Procedente");
+           } else {
+              passaGrafico = item.parecer === filtroGraficoParecer;
+           }
+        }
+        if (filtroGraficoApp && item.aplic !== filtroGraficoApp) passaGrafico = false;
+        
+        // 3. Filtro Texto (Tabela)
+        var passaColuna = true;
+        var chaves = ['cd', 'os', 'pn', 'oc', 'aplic', 'dataVisual', 'qtd', 'parecer'];
+        for (var colIndex in filtrosColuna) {
+            var valorBusca = filtrosColuna[colIndex].toLowerCase();
+            if (valorBusca && valorBusca !== "") {
+                var valorCelula = String(item[chaves[colIndex]]).toLowerCase();
+                if (!valorCelula.includes(valorBusca)) passaColuna = false;
+            }
+        }
+        
+        return passaData && passaGrafico && passaColuna;
+      });
+      
+      atualizarKPIs(dadosFiltrados);
+      desenharTabela(dadosFiltrados);
+      desenharGraficos(dadosFiltrados);
+    }
+
+    function atualizarKPIs(dados) {
+      document.getElementById('kpi-total').innerText = dados.length;
+      document.getElementById('kpi-escape').innerText = dados.reduce((acc, i) => acc + i.qtd, 0);
+      document.getElementById('kpi-procedentes').innerText = dados.filter(i => i.parecer === "Procedente").length;
+      document.getElementById('kpi-nao-procedentes').innerText = dados.filter(i => i.parecer.includes("Não Procedente")).length;
+    }
+
+    function desenharTabela(dados) {
+      var tbody = document.querySelector('#minhaTabela tbody');
+      var contador = document.getElementById('contadorTabela');
+      tbody.innerHTML = '';
+      contador.innerText = "Mostrando " + Math.min(dados.length, 100) + " de " + dados.length + " registros";
+      if (dados.length === 0) { tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding:20px; color:#999">Nenhum dado encontrado.</td></tr>'; return; }
+      dados.slice(0, 100).forEach(d => {
+        var tr = document.createElement('tr');
+        tr.innerHTML = `<td>${d.cd}</td><td>${d.os}</td><td>${d.pn}</td><td>${d.oc}</td><td>${d.aplic}</td><td>${d.dataVisual}</td><td><b>${d.qtd}</b></td><td>${d.parecer}</td><td>${d.anexosHtml}</td>
+          <td style="text-align:center"><span class="material-icons" style="font-size:18px; cursor:pointer; color:#f39c12" onclick="editarRegistro(${d.idLinha})">edit</span></td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function desenharGraficos(dados) {
+      var countParecer = {};
+      dados.forEach(d => { var p = d.parecer.includes("Não Procedente") ? "Não Procedente" : d.parecer; if(p && p!=="N/A") countParecer[p] = (countParecer[p]||0)+1; });
+      var arrayRosca = [['Tipo', 'Qtd']];
+      if(countParecer['Procedente']) arrayRosca.push(['Procedente', countParecer['Procedente']]);
+      if(countParecer['Não Procedente']) arrayRosca.push(['Não Procedente', countParecer['Não Procedente']]);
+      if(arrayRosca.length===1) arrayRosca.push(['Sem dados',0]);
+      var chartRosca = new google.visualization.PieChart(document.getElementById('div_rosca'));
+      google.visualization.events.addListener(chartRosca, 'select', function() { var s=chartRosca.getSelection(); if(s.length>0 && arrayRosca[s[0].row+1][0]!=='Sem dados') { filtroGraficoParecer=arrayRosca[s[0].row+1][0]; atualizarDashboard(); } });
+      chartRosca.draw(google.visualization.arrayToDataTable(arrayRosca), {pieHole:0.6, colors:['#2ecc71','#f1c40f','#ccc'], legend:{position:'bottom'}, chartArea:{width:'90%', height:'80%'}});
+
+      var countApp = {};
+      dados.forEach(d => { if(d.aplic) countApp[d.aplic] = (countApp[d.aplic] || 0) + 1; });
+      var sorted = Object.keys(countApp).map(k=>[k, countApp[k]]).sort((a,b)=>b[1]-a[1]).slice(0,15);
+      var arrayBar = [['App', 'Ocorrências', {role:'annotation'}]];
+      sorted.forEach(i => arrayBar.push([i[0], i[1], i[1].toString()]));
+      if(arrayBar.length===1) arrayBar.push(["Sem dados",0,"0"]);
+      var chartBar = new google.visualization.ColumnChart(document.getElementById('div_barras'));
+      google.visualization.events.addListener(chartBar, 'select', function() { var s=chartBar.getSelection(); if(s.length>0 && arrayBar[s[0].row+1][0]!=='Sem dados') { filtroGraficoApp=arrayBar[s[0].row+1][0]; atualizarDashboard(); } });
+      chartBar.draw(google.visualization.arrayToDataTable(arrayBar), {legend:{position:'none'}, colors:['#2c3e50'], bar:{groupWidth:'65%'}, chartArea:{width:'90%', height:'75%'}, hAxis:{textStyle:{fontSize:9}, slantedText:false}, vAxis:{gridlines:{color:'#eee'}}});
+    }
+
+    function alternarFiltrosTabela() { var l = document.getElementById('linhaFiltros'); l.style.display = (l.style.display==='table-row')?'none':'table-row'; }
+    function aplicarFiltroColuna(i) { var v = document.querySelectorAll('.column-filter')[i].value; if(v==="") delete filtrosColuna[i]; else filtrosColuna[i]=v; atualizarDashboard(); }
+    
+    function limparFiltrosGerais() { 
+      filtroGraficoParecer=null; filtroGraficoApp=null; filtrosColuna={}; 
+      filtroDataInicio=""; filtroDataFim="";
+      document.getElementById('dataInicio').value=""; document.getElementById('dataFim').value="";
+      document.querySelectorAll('.column-filter').forEach(s=>s.value=""); 
+      atualizarDashboard(); 
+    }
+  </script>
+</body>
+</html>
