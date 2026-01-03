@@ -6,38 +6,33 @@
   <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
-    :root { --bi-blue: #004a99; --bi-gray: #f3f2f1; --bi-green: #00ce64; --bi-yellow: #f2c811; --bi-red: #e81123; --bi-light-blue: #e7f0ff; }
-    body { font-family: 'Segoe UI', sans-serif; background: var(--bi-gray); margin: 0; color: #333; }
-    
-    .header { background: var(--bi-blue); color: white; padding: 12px 25px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
-    .btn-new { background: var(--bi-green); color: white; border: none; padding: 10px 20px; cursor: pointer; font-weight: bold; border-radius: 6px; transition: 0.3s; }
-    .btn-new:hover { background: #00a852; transform: translateY(-1px); }
-    
-    /* Modal Modernizado */
-    #modalForm { display:none; position:fixed; z-index:1000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.6); backdrop-filter: blur(3px); }
-    .modal-content { background:white; margin:2% auto; padding:25px; width:450px; border-radius:12px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); max-height: 90vh; overflow-y: auto; }
-    .modal-content h3 { margin: 0 0 20px 0; color: var(--bi-blue); border-bottom: 2px solid var(--bi-light-blue); padding-bottom: 10px; }
-    
-    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-    .form-group { margin-bottom: 15px; }
-    .form-group.full { grid-column: span 2; }
-    .form-group label { display:block; font-size: 13px; font-weight: 600; margin-bottom: 5px; color: #555; }
-    .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; box-sizing: border-box; }
-    
-    /* Botões de Upload Estilizados */
-    .upload-box { display: flex; align-items: center; gap: 10px; background: var(--bi-light-blue); padding: 8px; border-radius: 6px; border: 1px dashed var(--bi-blue); }
-    .btn-select { background: white; border: 1px solid var(--bi-blue); color: var(--bi-blue); padding: 5px 10px; border-radius: 4px; font-size: 12px; font-weight: bold; cursor: pointer; }
-    .file-name { font-size: 11px; color: #666; font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 160px; }
-
-    /* KPIs e Tabela */
+    :root { --bi-blue: #004a99; --bi-gray: #f3f2f1; --bi-green: #00ce64; --bi-yellow: #f2c811; --bi-red: #e81123; --bi-light: #e7f0ff; }
+    body { font-family: 'Segoe UI', sans-serif; background: var(--bi-gray); margin: 0; }
+    .header { background: var(--bi-blue); color: white; padding: 12px 25px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    .btn-new { background: var(--bi-green); color: white; border: none; padding: 10px 18px; cursor: pointer; font-weight: bold; border-radius: 6px; }
     .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; padding: 15px; }
     .kpi-card { background: white; padding: 15px; border-radius: 8px; text-align: center; border-top: 5px solid var(--bi-blue); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
     .kpi-value { font-size: 26px; font-weight: bold; margin-top: 5px; }
-    .table-container { background: white; margin: 0 15px 20px 15px; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-    table { width: 100%; border-collapse: collapse; }
-    th { background: #f8f9fa; padding: 15px; text-align: left; font-size: 13px; color: var(--bi-blue); border-bottom: 2px solid #eee; }
-    td { padding: 12px 15px; border-bottom: 1px solid #eee; font-size: 13px; }
-    .btn-link { background: #e3f2fd; padding: 4px 8px; text-decoration: none; color: #1976d2; border-radius: 4px; font-size: 11px; font-weight: bold; border: 1px solid #bbdefb; }
+    
+    /* MODAL DESIGN */
+    #modalForm { display:none; position:fixed; z-index:1000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.6); backdrop-filter: blur(2px); }
+    .modal-content { background:white; margin:2% auto; padding:25px; width:450px; border-radius:12px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .form-group { margin-bottom: 12px; }
+    .form-group.full { grid-column: span 2; }
+    .form-group label { display:block; font-size: 12px; font-weight: bold; color: #444; margin-bottom: 4px; }
+    .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+    
+    /* UPLOAD BUTTONS */
+    .upload-area { background: var(--bi-light); border: 1px dashed var(--bi-blue); padding: 8px; border-radius: 6px; display: flex; align-items: center; gap: 10px; }
+    .btn-select { background: white; border: 1px solid var(--bi-blue); color: var(--bi-blue); padding: 5px 10px; border-radius: 4px; font-size: 11px; cursor: pointer; font-weight: 600; }
+    .file-info { font-size: 11px; color: #666; font-style: italic; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 150px; }
+
+    .table-container { background: white; margin: 0 15px 20px 15px; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th { background: #f8f9fa; padding: 12px; text-align: left; border-bottom: 2px solid #eee; color: var(--bi-blue); }
+    td { padding: 10px; border-bottom: 1px solid #f1f3f4; }
+    .btn-anexo { background: var(--bi-light); padding: 4px 8px; text-decoration: none; color: var(--bi-blue); border-radius: 4px; font-size: 11px; font-weight: bold; border: 1px solid var(--bi-blue); }
 
     #loader { position: fixed; width: 100%; height: 100%; background: rgba(255,255,255,0.8); z-index: 9999; display: none; flex-direction: column; justify-content: center; align-items: center; }
     .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--bi-blue); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
@@ -48,12 +43,12 @@
 
 <div id="loader">
   <div class="spinner"></div>
-  <h3 id="loaderText" style="margin-top:15px">A processar...</h3>
+  <h3 id="loaderTxt" style="margin-top:15px">Processando...</h3>
 </div>
 
 <div id="modalForm">
   <div class="modal-content">
-    <h3>Novo Registro Quality</h3>
+    <h3 style="margin:0 0 20px 0; color:var(--bi-blue)">Novo Registro Quality</h3>
     <form id="meuForm">
       <div class="form-grid">
         <div class="form-group"><label>CD:</label><input type="text" name="cd" required></div>
@@ -70,26 +65,23 @@
             <option value="Não Procedente">Não Procedente</option>
           </select>
         </div>
-        
         <div class="form-group full">
           <label>Anexo 1 (Imagem):</label>
-          <div class="upload-box">
-            <label class="btn-select">Selecionar<input type="file" id="f1" hidden onchange="showName(this, 'n1')"></label>
-            <span id="n1" class="file-name">Nenhum ficheiro...</span>
+          <div class="upload-area">
+            <label class="btn-select">Escolher<input type="file" id="f1" hidden onchange="updateName(this, 'n1')"></label>
+            <span id="n1" class="file-info">Nenhum arquivo...</span>
           </div>
         </div>
-
         <div class="form-group full">
-          <label>Anexo 2 (PPTX/Outros):</label>
-          <div class="upload-box">
-            <label class="btn-select">Selecionar<input type="file" id="f2" hidden onchange="showName(this, 'n2')"></label>
-            <span id="n2" class="file-name">Nenhum ficheiro...</span>
+          <label>Anexo 2 (Doc/PPTX):</label>
+          <div class="upload-area">
+            <label class="btn-select">Escolher<input type="file" id="f2" hidden onchange="updateName(this, 'n2')"></label>
+            <span id="n2" class="file-info">Nenhum arquivo...</span>
           </div>
         </div>
       </div>
-
-      <button type="button" onclick="enviarTudo()" class="btn-new" style="width:100%; margin-top:20px; padding:15px">SALVAR NA PLANILHA</button>
-      <button type="button" onclick="fecharModal()" style="width:100%; background:none; color:#888; border:none; margin-top:10px; cursor:pointer">Cancelar</button>
+      <button type="button" onclick="enviar()" class="btn-new" style="width:100%; margin-top:15px; padding:12px">SALVAR DADOS</button>
+      <button type="button" onclick="fecharModal()" style="width:100%; background:none; border:none; color:#888; cursor:pointer; margin-top:8px">Cancelar</button>
     </form>
   </div>
 </div>
@@ -98,7 +90,7 @@
   <h2 style="margin:0">SAP Quality Analytics</h2>
   <div>
     <button class="btn-new" onclick="abrirModal()">+ NOVO REGISTRO</button>
-    <button onclick="iniciar()" style="background:var(--bi-yellow); border:none; padding:10px 15px; cursor:pointer; font-weight:bold; border-radius:6px; margin-left:10px">ATUALIZAR</button>
+    <button onclick="iniciar()" style="background:var(--bi-yellow); border:none; padding:10px 15px; cursor:pointer; font-weight:bold; border-radius:6px; margin-left:8px">ATUALIZAR</button>
   </div>
 </div>
 
@@ -131,39 +123,37 @@
     }).getDadosDashboard();
   }
 
-  function showName(input, spanId) {
-    document.getElementById(spanId).innerText = input.files[0] ? input.files[0].name : "Nenhum ficheiro...";
+  function updateName(input, spanId) {
+    document.getElementById(spanId).innerText = input.files[0] ? input.files[0].name : "Nenhum arquivo...";
   }
 
-  async function enviarTudo() {
+  async function enviar() {
     const f = document.getElementById('meuForm');
     if(!f.cd.value || !f.data.value) return alert("Campos CD e Data são obrigatórios!");
 
     document.getElementById('loader').style.display = 'flex';
-    document.getElementById('loaderText').innerText = "A carregar ficheiros...";
+    document.getElementById('loaderTxt').innerText = "Fazendo upload dos anexos...";
 
-    let link1 = "", link2 = "";
-    
-    // Processamento de Uploads
+    let url1 = "", url2 = "";
     const file1 = document.getElementById('f1').files[0];
-    if(file1) link1 = await uploadFile(file1);
-
     const file2 = document.getElementById('f2').files[0];
-    if(file2) link2 = await uploadFile(file2);
 
-    document.getElementById('loaderText').innerText = "A guardar dados...";
+    if(file1) url1 = await uploadFile(file1);
+    if(file2) url2 = await uploadFile(file2);
+
+    document.getElementById('loaderTxt').innerText = "Salvando na planilha...";
 
     const obj = {
       cd: f.cd.value, os: f.os.value, pn: f.pn.value, oc: f.oc.value,
       aplic: f.aplic.value, data: f.data.value, qtd: f.qtd.value,
-      parecer: f.parecer.value, anexo1: link1, anexo2: link2
+      parecer: f.parecer.value, anexo1: url1, anexo2: url2
     };
 
     google.script.run.withSuccessHandler(() => {
-      alert("Registro guardado com sucesso!");
+      alert("Salvo!");
       f.reset();
-      document.getElementById('n1').innerText = "Nenhum ficheiro...";
-      document.getElementById('n2').innerText = "Nenhum ficheiro...";
+      document.getElementById('n1').innerText = "Nenhum arquivo...";
+      document.getElementById('n2').innerText = "Nenhum arquivo...";
       fecharModal();
       iniciar();
     }).salvarDados(obj);
@@ -188,8 +178,8 @@
 
     document.getElementById('corpoTabela').innerHTML = dadosOriginais.map(d => {
       let anexos = "";
-      if(d.anexo1 && d.anexo1.includes("http")) anexos += `<a href="${d.anexo1}" target="_blank" class="btn-link">Ver Foto</a> `;
-      if(d.anexo2 && d.anexo2.includes("http")) anexos += `<a href="${d.anexo2}" target="_blank" class="btn-link">Doc</a>`;
+      if(d.anexo1 && d.anexo1.includes("http")) anexos += `<a href="${d.anexo1}" target="_blank" class="btn-anexo">Foto</a> `;
+      if(d.anexo2 && d.anexo2.includes("http")) anexos += `<a href="${d.anexo2}" target="_blank" class="btn-anexo">Doc</a>`;
       return `<tr><td>${d.cd}</td><td>${d.os}</td><td>${d.pn}</td><td>${d.data}</td><td>${d.qtd}</td><td>${d.parecer}</td><td>${anexos}</td></tr>`;
     }).join('');
   }
