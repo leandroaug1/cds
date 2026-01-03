@@ -1,8 +1,5 @@
 const ID_PLANILHA = "1rU7ETLF7vxQY3mQNFjVSpVmWts6lcZltzb22GQWy9sQ";
 
-/**
- * Função GET: Envia os dados para o dashboard no GitHub.
- */
 function doGet(e) {
   try {
     const dados = getDadosDashboard();
@@ -14,9 +11,6 @@ function doGet(e) {
   }
 }
 
-/**
- * Função POST: Recebe novos registos do dashboard.
- */
 function doPost(e) {
   try {
     const data = JSON.parse(e.postData.contents);
@@ -44,7 +38,7 @@ function getDadosDashboard() {
   const ss = SpreadsheetApp.openById(ID_PLANILHA);
   const sheet = ss.getSheetByName("ControleCds");
   const dados = sheet.getDataRange().getValues();
-  dados.shift(); // Remove cabeçalho
+  dados.shift(); 
 
   return dados.map(linha => {
     let d = linha[5];
@@ -54,7 +48,7 @@ function getDadosDashboard() {
       pn: String(linha[2] || ""),
       oc: String(linha[3] || ""),
       aplic: String(linha[4] || ""),
-      // Formatos de data para evitar o erro 'undefined'
+      // Correção da Data: Enviando chaves consistentes para o Frontend
       dataRaw: d instanceof Date ? d.toISOString().split('T')[0] : "", 
       dataExibicao: d instanceof Date ? Utilities.formatDate(d, "GMT-3", "dd/MM/yyyy") : String(d || "-"),
       qtd: Number(linha[6]) || 0,
