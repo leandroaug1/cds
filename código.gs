@@ -9,7 +9,7 @@ function doGet() {
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
 
-// Ponto de entrada da API para o GitHub
+// Interface de API para o GitHub Pages
 function doPost(e) {
   try {
     var request = JSON.parse(e.postData.contents);
@@ -42,18 +42,18 @@ function getDadosDashboard() {
   dados.shift(); // Remove cabeçalho
   
   return dados.map(function(linha, indice) {
-    var dataVisual = "";
+    var dataFormatada = "";
     if (linha[5]) {
       try {
-        // Formatação rigorosa da data para evitar "undefined"
-        dataVisual = Utilities.formatDate(new Date(linha[5]), Session.getScriptTimeZone(), "dd/MM/yyyy");
-      } catch (e) { dataVisual = linha[5].toString(); }
+        // CORREÇÃO: Garante que a data seja lida e formatada como texto DD/MM/AAAA
+        dataFormatada = Utilities.formatDate(new Date(linha[5]), Session.getScriptTimeZone(), "dd/MM/yyyy");
+      } catch (e) { dataFormatada = "Erro Data"; }
     }
 
     var linkImg = linha[8] ? linha[8].toString() : "";
     var linkPpt = linha[9] ? linha[9].toString() : "";
     var htmlLinks = "";
-    if (linkImg.includes("http")) htmlLinks += '<a href="' + linkImg + '" target="_blank">📷</a>';
+    if (linkImg.includes("http")) htmlLinks += '<a href="' + linkImg + '" target="_blank" style="margin-right:8px">📷</a>';
     if (linkPpt.includes("http")) htmlLinks += '<a href="' + linkPpt + '" target="_blank">📄</a>';
 
     return {
@@ -63,8 +63,7 @@ function getDadosDashboard() {
       pn: linha[2] || "",
       oc: linha[3] || "",
       aplic: linha[4] || "",
-      dataInput: linha[5], 
-      dataVisual: dataVisual, // Campo usado na tabela
+      dataVisual: dataFormatada, // Chave única para leitura no HTML
       qtd: Number(linha[6]) || 0,
       parecer: linha[7] ? linha[7].toString().trim() : "",
       anexosHtml: htmlLinks || "-"
