@@ -15,9 +15,9 @@ function getDadosDashboard() {
   const ss = SpreadsheetApp.openById(ID_PLANILHA);
   const sheet = ss.getSheetByName("ControleCds");
   const dados = sheet.getDataRange().getValues();
-  dados.shift(); 
-  
-  return dados.map(function(linha, indice) {
+  dados.shift(); // Remove o cabeçalho
+
+  return dados.map(function(linha) {
     let dataFormatada = "-";
     if (linha[5]) {
       try {
@@ -35,20 +35,19 @@ function getDadosDashboard() {
       data: dataFormatada,
       qtd: Number(linha[6]) || 0,
       parecer: String(linha[7] || "Sem Parecer"),
-      anexo1: String(linha[8] || ""), // Coluna I
-      anexo2: String(linha[9] || "")  // Coluna J
+      anexo1: String(linha[8] || ""), // Coluna I (Link Imagem)
+      anexo2: String(linha[9] || "")  // Coluna J (Link PPTX)
     };
   });
 }
 
-// FUNÇÃO PARA O FORMULÁRIO SALVAR NA PLANILHA
 function salvarDados(obj) {
   try {
     const ss = SpreadsheetApp.openById(ID_PLANILHA);
     const sheet = ss.getSheetByName("ControleCds");
     sheet.appendRow([
       obj.cd, obj.os, obj.pn, obj.oc, obj.aplic, 
-      new Date(obj.data + "T12:00:00"), // Ajuste de fuso
+      new Date(obj.data + "T12:00:00"), 
       obj.qtd, obj.parecer, obj.anexo1, obj.anexo2
     ]);
     return "Sucesso!";
