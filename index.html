@@ -19,15 +19,14 @@
     table { width: 100%; border-collapse: collapse; font-size: 12px; }
     th { background: #faf9f8; padding: 12px; text-align: left; border-bottom: 2px solid #eee; }
     td { padding: 10px; border-bottom: 1px solid #f1f3f4; }
-    .btn-anexo { background: #eee; padding: 4px 8px; text-decoration: none; color: #333; border-radius: 3px; font-size: 10px; margin-right: 2px; border: 1px solid #ccc; }
+    .btn-anexo { background: #e1f5fe; padding: 4px 8px; text-decoration: none; color: #01579b; border-radius: 3px; font-size: 10px; margin-right: 5px; border: 1px solid #01579b; font-weight: bold; }
     
-    /* MODAL FORMULÁRIO */
     #modalForm { display:none; position:fixed; z-index:1000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.5); }
     .modal-content { background:white; margin:5% auto; padding:20px; width:400px; border-radius:8px; }
     .form-group { margin-bottom: 10px; }
     .form-group label { display:block; font-size: 12px; font-weight: bold; }
     .form-group input, .form-group select { width: 100%; padding: 8px; box-sizing: border-box; }
-    #loader { position: fixed; width: 100%; height: 100%; background: rgba(255,255,255,0.8); z-index: 9999; display: flex; justify-content: center; align-items: center; }
+    #loader { position: fixed; width: 100%; height: 100%; background: rgba(255,255,255,0.8); z-index: 9999; display: none; justify-content: center; align-items: center; }
   </style>
 </head>
 <body>
@@ -38,7 +37,7 @@
   <div class="modal-content">
     <h3 style="margin-top:0">Novo Registro Quality</h3>
     <form id="meuForm">
-      <div class="form-group"><label>CD:</label><input type="text" name="cd" required></div>
+      <div class="form-group"><label>Número do CD:</label><input type="text" name="cd" required></div>
       <div class="form-group"><label>OS:</label><input type="text" name="os"></div>
       <div class="form-group"><label>PN:</label><input type="text" name="pn"></div>
       <div class="form-group"><label>OC:</label><input type="text" name="oc"></div>
@@ -52,8 +51,8 @@
           <option value="Não Procedente">Não Procedente</option>
         </select>
       </div>
-      <div class="form-group"><label>Link Anexo 1:</label><input type="text" name="anexo1"></div>
-      <div class="form-group"><label>Link Anexo 2:</label><input type="text" name="anexo2"></div>
+      <div class="form-group"><label>Link Imagem (Coluna I):</label><input type="text" name="anexo1"></div>
+      <div class="form-group"><label>Link PPTX (Coluna J):</label><input type="text" name="anexo2"></div>
       <button type="button" onclick="salvar()" class="btn-new" style="width:100%">SALVAR NA PLANILHA</button>
       <button type="button" onclick="fecharModal()" style="width:100%; background:#ccc; margin-top:5px; border:none; padding:8px; border-radius:4px; cursor:pointer">Cancelar</button>
     </form>
@@ -88,7 +87,6 @@
 </div>
 
 <script>
-  const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwZ0aaF_nK7i6EQVQXtdt2tLfk9ZrmJfgA2SSo5CEG2BvXafljmNspM1GG9_C-iJjkp/exec";
   var dadosOriginais = [];
   var filtroClique = null;
 
@@ -99,14 +97,13 @@
     document.getElementById('loader').style.display = 'flex';
     try {
       if (typeof google !== 'undefined' && google.script && google.script.run) {
-        google.script.run.withSuccessHandler(res => { dadosOriginais = res; renderizar(); }).getDadosDashboard();
-      } else {
-        const response = await fetch(WEB_APP_URL + "?api=true");
-        dadosOriginais = await response.json();
-        renderizar();
+        google.script.run.withSuccessHandler(res => { 
+          dadosOriginais = res; 
+          renderizar(); 
+          document.getElementById('loader').style.display = 'none';
+        }).getDadosDashboard();
       }
     } catch (e) { alert("Erro ao carregar: " + e); }
-    document.getElementById('loader').style.display = 'none';
   }
 
   function renderizar() {
@@ -119,8 +116,8 @@
 
     document.getElementById('corpoTabela').innerHTML = filtrados.map(d => {
       let links = "";
-      if(d.anexo1) links += `<a href="${d.anexo1}" target="_blank" class="btn-anexo">Doc 1</a>`;
-      if(d.anexo2) links += `<a href="${d.anexo2}" target="_blank" class="btn-anexo">Doc 2</a>`;
+      if(d.anexo1 && d.anexo1.length > 5) links += `<a href="${d.anexo1}" target="_blank" class="btn-anexo">📸 Foto</a>`;
+      if(d.anexo2 && d.anexo2.length > 5) links += `<a href="${d.anexo2}" target="_blank" class="btn-anexo">📊 PPTX</a>`;
       
       return `<tr>
         <td>${d.cd}</td><td>${d.os}</td><td>${d.pn}</td><td>${d.data}</td>
@@ -151,7 +148,6 @@
     new google.visualization.BarChart(document.getElementById('div_barras')).draw(dataB, { title: 'Top Aplicações', colors: ['#004a99'], legend: 'none' });
   }
 
-  // FUNÇÕES DO MODAL
   function abrirModal() { document.getElementById('modalForm').style.display = 'block'; }
   function fecharModal() { document.getElementById('modalForm').style.display = 'none'; }
 
@@ -163,15 +159,15 @@
       parecer: f.parecer.value, anexo1: f.anexo1.value, anexo2: f.anexo2.value
     };
     
-    if(!obj.cd || !obj.data) return alert("CD e Data são obrigatórios!");
+    if(!obj.cd || !obj.data) return alert("Número do CD e Data são obrigatórios!");
 
     document.getElementById('loader').style.display = 'flex';
-    if (typeof google !== 'undefined' && google.script && google.script.run) {
-      google.script.run.withSuccessHandler(() => { alert("Salvo!"); f.reset(); fecharModal(); iniciar(); }).salvarDados(obj);
-    } else {
-      alert("A função de salvar requer execução dentro do Google Apps Script (Web App). No GitHub Pages, esta função está limitada.");
-      document.getElementById('loader').style.display = 'none';
-    }
+    google.script.run.withSuccessHandler(() => { 
+      alert("Salvo com sucesso!"); 
+      f.reset(); 
+      fecharModal(); 
+      iniciar(); 
+    }).salvarDados(obj);
   }
 </script>
 </body>
