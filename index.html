@@ -9,7 +9,6 @@
     :root { --bi-blue: #004a99; --bi-gray: #f3f2f1; --bi-green: #00ce64; --bi-yellow: #f2c811; --bi-red: #e81123; }
     body { font-family: 'Segoe UI', sans-serif; background: var(--bi-gray); margin: 0; padding-bottom: 30px; }
     .header { background: var(--bi-blue); color: white; padding: 12px 25px; display: flex; justify-content: space-between; align-items: center; }
-    .filter-bar { background: white; padding: 15px 25px; display: flex; gap: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); align-items: flex-end; }
     .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; padding: 15px; }
     .kpi-card { background: white; padding: 15px; border-radius: 4px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-top: 5px solid var(--bi-blue); }
     .kpi-value { font-size: 26px; font-weight: bold; margin-top: 5px; }
@@ -31,14 +30,6 @@
   <button onclick="iniciar()" style="background:var(--bi-yellow); border:none; padding:8px 15px; cursor:pointer; font-weight:bold; border-radius:4px">Atualizar</button>
 </div>
 
-<div class="filter-bar">
-  <div style="display:flex; flex-direction:column; font-size:11px;">
-    <label>BUSCA GLOBAL</label>
-    <input type="text" id="f-busca" placeholder="CD, OS, PN..." onkeyup="renderizar()" style="padding:6px; width:300px; border:1px solid #ddd; border-radius:4px;">
-  </div>
-  <button onclick="limparFiltros()" style="padding:7px 15px; cursor:pointer; background:#eee; border:1px solid #ccc; border-radius:4px; font-weight:bold;">Limpar Filtros</button>
-</div>
-
 <div class="kpi-row">
   <div class="kpi-card">VOL. TOTAL<div id="k-total" class="kpi-value">-</div></div>
   <div class="kpi-card" style="border-top-color:var(--bi-red)">QTD ESCAPE<div id="k-escape" class="kpi-value" style="color:var(--bi-red)">-</div></div>
@@ -53,46 +44,44 @@
 
 <div class="table-container">
   <table>
-    <thead>
-      <tr><th>CD</th><th>OS</th><th>PN</th><th>APLICAÇÃO</th><th>DATA</th><th>QTD</th><th>PARECER</th></tr>
-    </thead>
+    <thead><tr><th>CD</th><th>OS</th><th>PN</th><th>APLICAÇÃO</th><th>DATA</th><th>QTD</th><th>PARECER</th></tr></thead>
     <tbody id="corpoTabela"></tbody>
   </table>
 </div>
 
 <script>
+  // ATENÇÃO: Cole aqui a URL gerada na Implantação do Apps Script
+  const WEB_APP_URL = "SUA_URL_DO_WEB_APP_AQUI"; 
+  
   var dadosOriginais = [];
-  var filtroClique = null; // Filtro persistente do gráfico
+  var filtroClique = null;
 
   google.charts.load('current', {'packages':['corechart']});
   google.charts.setOnLoadCallback(iniciar);
 
-  function iniciar() {
+  async function iniciar() {
     document.getElementById('loader').style.display = 'flex';
-    google.script.run.withSuccessHandler(function(res) {
-      dadosOriginais = res;
-      document.getElementById('loader').style.display = 'none';
-      renderizar();
-    }).getDadosDashboard();
+    if (typeof google !== 'undefined' && google.script && google.script.run) {
+      google.script.run.withSuccessHandler(res => { dadosOriginais = res; finalizar(); }).getDadosDashboard();
+    } else {
+      const resp = await fetch(WEB_APP_URL + "?api=true");
+      dadosOriginais = await resp.json();
+      finalizar();
+    }
   }
 
-  function limparFiltros() {
-    filtroClique = null;
-    document.getElementById('f-busca').value = "";
+  function finalizar() {
+    document.getElementById('loader').style.display = 'none';
     renderizar();
   }
 
   function renderizar() {
-    const busca = document.getElementById('f-busca').value.toLowerCase();
-    
-    // FILTRAGEM UNIFICADA
+    // ESTADO DE FILTRO (Power BI Style)
     let filtrados = dadosOriginais.filter(d => {
-      const matchBusca = !busca || (d.cd + d.os + d.pn + d.aplic).toLowerCase().includes(busca);
-      const matchClique = !filtroClique || d.parecer.toLowerCase() === filtroClique.toLowerCase();
-      return matchBusca && matchClique;
+      return !filtroClique || d.parecer.toLowerCase() === filtroClique.toLowerCase();
     });
 
-    // ATUALIZAR KPIs (AGORA FILTRAM!)
+    // ATUALIZAR KPIs (Quadrados respondem ao filtro)
     document.getElementById('k-total').innerText = filtrados.length;
     document.getElementById('k-escape').innerText = filtrados.reduce((a, b) => a + b.qtd, 0);
     document.getElementById('k-proc').innerText = filtrados.filter(d => d.parecer.toLowerCase() === "procedente").length;
@@ -108,23 +97,20 @@
   }
 
   function desenharGraficos(dadosFiltrados) {
-    // 1. Gráfico de Rosca (Sempre com dados totais para permitir seleção)
+    // 1. Rosca (Usa dados originais para manter fatias selecionáveis)
     const p = dadosOriginais.filter(d => d.parecer.toLowerCase() === "procedente").length;
     const np = dadosOriginais.filter(d => d.parecer.toLowerCase().includes("não")).length;
     const dataR = google.visualization.arrayToDataTable([['S', 'Q'], ['Procedente', p], ['Não Procedente', np]]);
     
     const chartR = new google.visualization.PieChart(document.getElementById('div_rosca'));
-
-    // EVENTO DE CLIQUE ESTILO POWER BI
-    google.visualization.events.addListener(chartR, 'select', function() {
+    google.visualization.events.addListener(chartR, 'select', () => {
       const sel = chartR.getSelection()[0];
       filtroClique = sel ? dataR.getValue(sel.row, 0) : null;
-      renderizar(); // DISPARA FILTRO EM TUDO
+      renderizar();
     });
+    chartR.draw(dataR, { pieHole: 0.5, title: 'Parecer (Clique p/ Filtrar)', colors: ['#00ce64', '#f2c811'], legend: 'bottom' });
 
-    chartR.draw(dataR, { pieHole: 0.5, title: 'Filtro por Parecer (Clique)', colors: ['#00ce64', '#f2c811'], legend:'bottom' });
-
-    // 2. Gráfico de Barras (Contextualizado)
+    // 2. Barras (Usa dados filtrados)
     const apps = {};
     dadosFiltrados.forEach(d => { apps[d.aplic] = (apps[d.aplic] || 0) + 1; });
     const dataB = new google.visualization.DataTable();
@@ -132,7 +118,7 @@
     Object.keys(apps).sort((a,b)=>apps[b]-apps[a]).slice(0,10).forEach(k => dataB.addRow([k, apps[k]]));
 
     new google.visualization.BarChart(document.getElementById('div_barras')).draw(dataB, {
-      title: 'Top 10 Aplicações (Filtrado)', colors: ['#004a99'], legend: 'none', chartArea:{width:'60%', height:'80%'}
+      title: 'Top 10 Aplicações (Filtrado)', colors: ['#004a99'], legend: 'none', chartArea: {width:'60%', height:'80%'}
     });
   }
 </script>
