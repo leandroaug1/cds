@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8">
-  <title>SAP Quality Dashboard - Live</title>
+  <title>SAP Quality Dashboard - Sistema Completo</title>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
   <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
@@ -28,11 +28,10 @@
 
     .charts-row { display: flex; gap: 15px; margin-bottom: 15px; height: 350px; }
     .chart-box { background: white; border-radius: 6px; padding: 12px; flex: 1; box-shadow: 0 1px 3px rgba(0,0,0,0.1); position: relative; }
-    .chart-header { font-size: 13px; font-weight: bold; margin-bottom: 8px; border-bottom: 1px solid #eee; padding-bottom: 8px; display:flex; justify-content:space-between; align-items:center; color:#2c3e50; }
-    .filter-badge { font-size: 9px; background: #e74c3c; color: white; padding: 2px 6px; border-radius: 10px; font-weight: normal; }
+    .chart-header { font-size: 13px; font-weight: bold; margin-bottom: 8px; border-bottom: 1px solid #eee; padding-bottom: 8px; display:flex; justify-content:space-between; align-items:center; }
 
     .table-section { background: white; border-radius: 6px; padding: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-    .table-container { overflow-x: auto; max-height: 380px; }
+    .table-container { overflow-x: auto; max-height: 400px; }
     table { width: 100%; border-collapse: collapse; font-size: 10px; }
     th { background: #f8f9fa; padding: 10px; text-align: left; border-bottom: 2px solid #eee; position: sticky; top: 0; }
     td { padding: 8px 10px; border-bottom: 1px solid #f1f3f4; }
@@ -40,47 +39,51 @@
     .filter-row { display: none; background: #eaeff2; }
     .filter-input { width: 100%; padding: 4px; border: 1px solid #ccc; border-radius: 3px; font-size: 10px; box-sizing: border-box; }
 
+    /* Modal Estilizado */
     .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; display: none; justify-content: center; align-items: center; }
-    .modal-content { background: white; padding: 25px; border-radius: 8px; width: 450px; }
+    .modal-content { background: white; padding: 25px; border-radius: 8px; width: 500px; max-height: 90vh; overflow-y: auto; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
     .form-group { margin-bottom: 12px; }
-    .form-input { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+    .form-group label { display: block; font-size: 11px; font-weight: bold; margin-bottom: 4px; color: #555; }
+    .form-input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-family: inherit; }
+    .form-row { display: flex; gap: 10px; margin-bottom: 12px; }
+    .form-row .form-group { flex: 1; margin-bottom: 0; }
   </style>
 </head>
 <body>
 
-  <div id="loading"><div class="spinner"></div><div id="statusText">Sincronizando com a Planilha Real...</div></div>
+  <div id="loading"><div class="spinner"></div><div>Processando dados reais...</div></div>
 
   <div class="header">
     <h1><span class="material-icons">analytics</span> SAP Quality Dashboard</h1>
     <div class="header-controls">
-      <button class="btn btn-outline" onclick="limparTodosFiltros()">Limpar Filtros</button>
-      <button class="btn btn-yellow" onclick="abrirNovo()"><span class="material-icons" style="font-size:16px">add</span> Novo Registro</button>
+      <button class="btn btn-outline" onclick="limparBI()">Limpar BI</button>
+      <button class="btn btn-yellow" onclick="abrirNovo()"><span class="material-icons">add</span> Novo Registro</button>
     </div>
   </div>
 
   <div class="main-content">
     <div class="kpi-grid">
-      <div class="card" style="border-left-color:#3498db"><div class="card-title">Cds Registradas</div><div class="card-value" id="kpi-total">-</div></div>
-      <div class="card" style="border-left-color:#e74c3c"><div class="card-title">Peças Segregadas</div><div class="card-value" id="kpi-escape">-</div></div>
+      <div class="card"><div class="card-title">Cds</div><div class="card-value" id="kpi-total">-</div></div>
+      <div class="card" style="border-left-color:#e74c3c"><div class="card-title">Peças</div><div class="card-value" id="kpi-escape">-</div></div>
       <div class="card" style="border-left-color:#2ecc71"><div class="card-title">Procedentes</div><div class="card-value" id="kpi-proc">-</div></div>
-      <div class="card" style="border-left-color:#f1c40f"><div class="card-title">Não Procedentes</div><div class="card-value" id="kpi-nproc">-</div></div>
+      <div class="card" style="border-left-color:#f1c40f"><div class="card-title">Não Proc.</div><div class="card-value" id="kpi-nproc">-</div></div>
     </div>
 
     <div class="charts-row">
-      <div class="chart-box" style="flex: 0 0 350px;">
-        <div class="chart-header">Parecer Técnico <span id="badgeParecer" class="filter-badge" style="display:none">Filtro Ativo</span></div>
-        <div id="div_rosca" style="height:300px"></div>
+      <div class="chart-box" style="flex: 0 0 320px;">
+        <div class="chart-header">Parecer Técnico</div>
+        <div id="div_rosca" style="height:280px"></div>
       </div>
       <div class="chart-box">
-        <div class="chart-header">Ocorrências por Aplicação (Top 10) <span id="badgeAplic" class="filter-badge" style="display:none">Filtro Ativo</span></div>
-        <div id="div_barras" style="height:300px"></div>
+        <div class="chart-header">Ocorrências por Aplicação</div>
+        <div id="div_barras" style="height:280px"></div>
       </div>
     </div>
 
     <div class="table-section">
       <div class="chart-header">
         <span>Detalhamento dos Dados</span>
-        <button class="btn" style="background:#eee; color:#555; font-size:10px" onclick="toggleFiltrosTabela()">Pesquisa Avançada</button>
+        <button class="btn" style="background:#eee; color:#555" onclick="toggleFiltros()">Pesquisa Avançada</button>
       </div>
       <div class="table-container">
         <table id="tabelaDados">
@@ -106,15 +109,27 @@
 
   <div class="modal-overlay" id="modalForm">
     <div class="modal-content">
-      <h3 id="modalTitle">Registro</h3>
+      <h3 id="modalTitle" style="margin-top:0">Registro de CD</h3>
       <form id="formCad">
         <input type="hidden" id="f_id">
-        <div class="form-group"><label>CD</label><input type="text" id="f_cd" class="form-input" required></div>
-        <div class="form-group"><label>Aplicação</label><input type="text" id="f_aplic" class="form-input" required></div>
-        <div style="display:flex; gap:10px">
-          <div class="form-group" style="flex:1"><label>Data</label><input type="date" id="f_data" class="form-input" required></div>
-          <div class="form-group" style="flex:1"><label>Qtd</label><input type="number" id="f_qtd" class="form-input" required></div>
+        
+        <div class="form-row">
+          <div class="form-group"><label>Número CD</label><input type="text" id="f_cd" class="form-input" required></div>
+          <div class="form-group"><label>OS</label><input type="text" id="f_os" class="form-input"></div>
         </div>
+
+        <div class="form-row">
+          <div class="form-group"><label>PN</label><input type="text" id="f_pn" class="form-input"></div>
+          <div class="form-group"><label>OC</label><input type="text" id="f_oc" class="form-input"></div>
+        </div>
+
+        <div class="form-group"><label>Aplicação</label><input type="text" id="f_aplic" class="form-input" required></div>
+
+        <div class="form-row">
+          <div class="form-group"><label>Data</label><input type="date" id="f_data" class="form-input" required></div>
+          <div class="form-group"><label>Qtd</label><input type="number" id="f_qtd" class="form-input" required></div>
+        </div>
+
         <div class="form-group">
           <label>Parecer</label>
           <select id="f_parecer" class="form-input">
@@ -122,8 +137,14 @@
             <option value="Não Procedente">Não Procedente</option>
           </select>
         </div>
-        <button type="button" class="btn btn-yellow" style="width:100%" onclick="salvar()">SALVAR REGISTRO</button>
-        <button type="button" style="width:100%; border:none; background:none; margin-top:10px; cursor:pointer" onclick="fecharModal()">Cancelar</button>
+
+        <div class="form-row">
+          <div class="form-group"><label>Anexar Imagem</label><input type="file" id="f_img" class="form-input" accept="image/*"></div>
+          <div class="form-group"><label>Anexar PPTX</label><input type="file" id="f_ppt" class="form-input" accept=".pptx"></div>
+        </div>
+
+        <button type="button" class="btn btn-yellow" style="width:100%; padding:12px; margin-top:10px" onclick="salvar()">SALVAR REGISTRO</button>
+        <button type="button" style="width:100%; border:none; background:none; margin-top:15px; cursor:pointer; color:#7f8c8d" onclick="fecharModal()">Cancelar</button>
       </form>
     </div>
   </div>
@@ -135,41 +156,26 @@
     var dadosBrutos = [];
     var filtroParecer = null;
     var filtroAplic = null;
-
-    // URL da sua API atualizada
     const URL_API = "https://script.google.com/macros/s/AKfycbxvwIZKCwCwngnw9mTJj49DGWEOoj9t58PPzU0BEctuaiLZmoUe3Hi6e9nU9y5HPt3SlA/exec";
 
     function iniciar() {
-      fetch(URL_API)
-        .then(res => res.json())
-        .then(json => {
-          dadosBrutos = json;
-          atualizarDashboard();
-          document.getElementById('loading').style.display = 'none';
-        })
-        .catch(err => {
-          document.getElementById('statusText').innerText = "Erro ao carregar dados.";
-          document.getElementById('statusText').style.color = "red";
-        });
+      fetch(URL_API).then(res => res.json()).then(res => {
+        dadosBrutos = res;
+        atualizarDashboard();
+        document.getElementById('loading').style.display='none';
+      }).catch(e => alert("Erro ao carregar dados: " + e));
     }
 
     function atualizarDashboard() {
       const inputs = document.querySelectorAll('.filter-input');
       const filtrados = dadosBrutos.filter(i => {
-        // Cross-Filter BI
-        if(filtroParecer) {
-          let pPlanilha = i.parecer.toLowerCase().trim();
-          let pFiltro = filtroParecer.toLowerCase().trim();
-          if(pFiltro === "procedente" && pPlanilha.includes("não")) return false;
-          if(!pPlanilha.includes(pFiltro)) return false;
-        }
+        if(filtroParecer && !i.parecer.includes(filtroParecer)) return false;
         if(filtroAplic && i.aplic !== filtroAplic) return false;
         
-        // Filtros de Coluna
-        let cols = ['cd','os','pn','oc','aplic','dataVisual','qtd','parecer'];
-        for(let idx=0; idx<cols.length; idx++) {
+        let chaves = ['cd','os','pn','oc','aplic','dataVisual','qtd','parecer'];
+        for(let idx=0; idx<chaves.length; idx++) {
           let val = inputs[idx].value.toLowerCase().trim();
-          if(val && !String(i[cols[idx]]).toLowerCase().includes(val)) return false;
+          if(val && !String(i[chaves[idx]]).toLowerCase().includes(val)) return false;
         }
         return true;
       });
@@ -177,9 +183,6 @@
       renderKPIs(filtrados);
       renderTable(filtrados);
       renderCharts(filtrados);
-      
-      document.getElementById('badgeParecer').style.display = filtroParecer ? 'inline' : 'none';
-      document.getElementById('badgeAplic').style.display = filtroAplic ? 'inline' : 'none';
     }
 
     function renderTable(d) {
@@ -189,8 +192,8 @@
           <td>${i.cd}</td><td>${i.os}</td><td>${i.pn}</td><td>${i.oc}</td><td>${i.aplic}</td>
           <td>${i.dataVisual}</td><td><b>${i.qtd}</b></td><td>${i.parecer}</td>
           <td style="text-align:center">
-            ${i.linkImg ? `<a href="${i.linkImg}" target="_blank">📷</a>` : ''}
-            ${i.linkPpt ? `<a href="${i.linkPpt}" target="_blank">📄</a>` : ''}
+            ${i.linkImg ? `<a href="${i.linkImg}" target="_blank" title="Ver Imagem">📷</a>` : ''}
+            ${i.linkPpt ? `<a href="${i.linkPpt}" target="_blank" title="Ver PPT">📄</a>` : ''}
           </td>
           <td style="white-space:nowrap">
             <span class="material-icons" style="color:#f39c12; cursor:pointer; font-size:18px" onclick="editar(${i.idLinha})">edit</span>
@@ -201,7 +204,7 @@
     }
 
     function renderCharts(d) {
-      // Rosca
+      // Gráfico de Rosca
       let p = d.filter(i => i.parecer === "Procedente").length;
       let np = d.filter(i => i.parecer.includes("Não")).length;
       let dataP = google.visualization.arrayToDataTable([['Parecer', 'Qtd'],['Procedente', p],['Não Procedente', np]]);
@@ -210,9 +213,9 @@
         let sel = chartP.getSelection();
         if(sel.length > 0) { filtroParecer = (sel[0].row === 0) ? "Procedente" : "Não Procedente"; atualizarDashboard(); }
       });
-      chartP.draw(dataP, { pieHole: 0.5, colors: ['#2ecc71','#f1c40f'], chartArea:{width:'90%', height:'80%'}, legend: {position:'bottom', textStyle:{fontSize:11}} });
+      chartP.draw(dataP, { pieHole: 0.5, colors: ['#2ecc71','#f1c40f'], chartArea:{width:'90%', height:'80%'}, legend: {position:'bottom', textStyle:{fontSize:10}} });
 
-      // Barras
+      // Gráfico de Barras
       let apps = {};
       d.forEach(i => { if(i.aplic) apps[i.aplic] = (apps[i.aplic]||0)+1; });
       let dataA = new google.visualization.DataTable();
@@ -234,22 +237,53 @@
       document.getElementById('kpi-nproc').innerText = d.filter(i => i.parecer.includes("Não")).length;
     }
 
-    function toggleFiltrosTabela() { let r = document.getElementById('rowFiltros'); r.style.display = (r.style.display==='table-row')?'none':'table-row'; }
-    function abrirNovo() { document.getElementById('formCad').reset(); document.getElementById('f_id').value=""; document.getElementById('modalForm').style.display='flex'; }
+    function toggleFiltros() { 
+      let r = document.getElementById('rowFiltros'); 
+      r.style.display = (r.style.display==='table-row')?'none':'table-row'; 
+    }
+
+    function abrirNovo() { 
+      document.getElementById('formCad').reset(); 
+      document.getElementById('f_id').value=""; 
+      document.getElementById('modalTitle').innerText = "Novo Registro";
+      document.getElementById('modalForm').style.display='flex'; 
+    }
+
     function fecharModal() { document.getElementById('modalForm').style.display='none'; }
+
     function editar(id) {
       let i = dadosBrutos.find(x => x.idLinha == id);
       document.getElementById('f_id').value = i.idLinha;
       document.getElementById('f_cd').value = i.cd;
+      document.getElementById('f_os').value = i.os;
+      document.getElementById('f_pn').value = i.pn;
+      document.getElementById('f_oc').value = i.oc;
       document.getElementById('f_aplic').value = i.aplic;
       document.getElementById('f_data').value = i.dataInput;
       document.getElementById('f_qtd').value = i.qtd;
       document.getElementById('f_parecer').value = i.parecer;
+      document.getElementById('modalTitle').innerText = "Editar Registro";
       document.getElementById('modalForm').style.display='flex';
     }
-    function deletar(id, cd) { if(confirm("Deseja excluir permanentemente a CD " + cd + "?")) { /* Funcionalidade via Post API */ } }
-    function limparTodosFiltros() { filtroParecer = null; filtroAplic = null; document.querySelectorAll('.filter-input').forEach(i => i.value = ""); atualizarDashboard(); }
-    function salvar() { /* Funcionalidade via Post API */ }
+
+    function deletar(id, cd) { 
+      if(confirm("Deseja excluir a CD " + cd + "?")) {
+        alert("A exclusão requer configuração de POST no Google Script.");
+      } 
+    }
+
+    function limparBI() { filtroParecer = null; filtroAplic = null; atualizarDashboard(); }
+
+    function salvar() {
+      // Exemplo de como os dados seriam capturados
+      const formData = {
+        idLinha: document.getElementById('f_id').value,
+        cd: document.getElementById('f_cd').value,
+        os: document.getElementById('f_os').value,
+        // ... demais campos
+      };
+      alert("Para salvar do GitHub para a Planilha, você precisa configurar um Web App com permissão de POST.");
+    }
   </script>
 </body>
 </html>
