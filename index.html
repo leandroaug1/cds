@@ -10,8 +10,9 @@
     .header { background: #004a99; color: white; padding: 15px 25px; display: flex; justify-content: space-between; align-items: center; }
     .btn { border: none; padding: 10px 18px; font-weight: bold; border-radius: 4px; cursor: pointer; transition: 0.3s; }
     .btn-new { background: #00ce64; color: white; }
-    .btn-edit { background: #ffc107; color: black; padding: 5px 10px; font-size: 11px; margin-right: 5px; border:none; cursor:pointer;}
-    .btn-del { background: #e81123; color: white; padding: 5px 10px; font-size: 11px; border:none; cursor:pointer;}
+    .btn-update { background: #f2c811; color: #333; }
+    .btn-edit { background: #ffc107; color: black; padding: 5px 10px; font-size: 11px; margin-right: 5px; border:none; border-radius:4px; cursor:pointer;}
+    .btn-del { background: #e81123; color: white; padding: 5px 10px; font-size: 11px; border:none; border-radius:4px; cursor:pointer;}
     .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; padding: 15px; }
     .kpi-card { background: white; padding: 15px; border-radius: 4px; text-align: center; border-bottom: 5px solid var(--bi-blue); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
     .kpi-value { font-size: 28px; font-weight: bold; margin-top: 5px; }
@@ -38,7 +39,7 @@
   <h2 style="margin:0">Escapes Aero | Dashboard</h2>
   <div class="btn-group">
     <button class="btn btn-new" onclick="abrirModal()">+ NOVO REGISTRO</button>
-    <button class="btn" style="background:#f2c811" onclick="iniciar()">ATUALIZAR</button>
+    <button class="btn btn-update" onclick="iniciar()">ATUALIZAR</button>
   </div>
 </div>
 
@@ -76,7 +77,7 @@
       <div class="form-group"><label>OC:</label><input type="text" id="in-oc"></div>
       <div class="form-group"><label>Aplicação:</label><input type="text" id="in-aplic"></div>
       <div class="form-group"><label>Data:</label><input type="date" id="in-data" required></div>
-      <div class="form-group"><label>Qtd:</label><input type="number" id="in-qtd" value="1"></div>
+      <div class="form-group"><label>Quantidade:</label><input type="number" id="in-qtd" value="1"></div>
       <div class="form-group"><label>Parecer:</label><select id="in-parecer"><option value="Procedente">Procedente</option><option value="Não Procedente">Não Procedente</option></select></div>
       <div class="form-group"><label>Anexo 1 (Imagem):</label><input type="file" id="f1" accept="image/*"></div>
       <div class="form-group"><label>Anexo 2 (Doc/PPTX):</label><input type="file" id="f2"></div>
@@ -88,7 +89,7 @@
 
 <script>
   // COLOQUE A SUA URL DE EXECUÇÃO DO APPS SCRIPT ABAIXO
-  const SCRIPT_URL = "SUA_URL_AQUI/exec"; 
+  const SCRIPT_URL = "SUA_URL_DO_SCRIPT_AQUI/exec"; 
   let dadosOriginais = [];
   let filtroClique = { campo: null, valor: null };
 
@@ -101,7 +102,7 @@
       const resp = await fetch(SCRIPT_URL);
       dadosOriginais = await resp.json();
       renderizar(dadosOriginais, true);
-    } catch (e) { console.error(e); }
+    } catch (e) { alert("Erro ao carregar dados. Verifique a URL do script e as permissões."); }
     finally { document.getElementById('loader').style.display = 'none'; }
   }
 
@@ -131,18 +132,13 @@
 
   function desenharGraficos(dados) {
     const commonOptions = { fontName: 'Segoe UI', chartArea: {width:'85%', height:'75%'}, legend:{position:'bottom'} };
-    
-    const pData = google.visualization.arrayToDataTable([
-      ['Parecer', 'Qtd'],
-      ['Procedente', dadosOriginais.filter(d => d.parecer === "Procedente").length],
-      ['Não Procedente', dadosOriginais.filter(d => d.parecer.includes("Não")).length]
-    ]);
+    const pData = google.visualization.arrayToDataTable([['Parecer', 'Qtd'],['Procedente', dadosOriginais.filter(d => d.parecer === "Procedente").length],['Não Procedente', dadosOriginais.filter(d => d.parecer.includes("Não")).length]]);
     const pie = new google.visualization.PieChart(document.getElementById('pie_parecer'));
     google.visualization.events.addListener(pie, 'select', () => {
       const sel = pie.getSelection()[0];
       if(sel) { filtroClique = { campo: 'parecer', valor: pData.getValue(sel.row, 0) }; filtrar(); }
     });
-    pie.draw(pData, { ...commonOptions, title: 'Parecer', pieHole: 0.45, colors: ['#01B8AA', '#E66C37'] });
+    pie.draw(pData, { ...commonOptions, title: 'Análise por Parecer', pieHole: 0.45, colors: ['#01B8AA', '#E66C37'] });
 
     const aplicMap = {};
     dadosOriginais.forEach(d => { aplicMap[d.aplic] = (aplicMap[d.aplic] || 0) + 1; });
@@ -152,13 +148,15 @@
       const sel = bar.getSelection()[0];
       if(sel) { filtroClique = { campo: 'aplic', valor: bData.getValue(sel.row, 0) }; filtrar(); }
     });
-    bar.draw(bData, { ...commonOptions, title: 'Top Aplicações', colors: ['#118DFF'], legend: 'none', chartArea: { left: 180, width: '70%', height: '80%' } });
+    bar.draw(bData, { ...commonOptions, title: 'Top 10 Aplicações', colors: ['#118DFF'], legend: 'none', chartArea: { left: 180, width: '70%', height: '80%' } });
   }
 
   function filtrar() {
     const filtrados = dadosOriginais.filter(d => {
       if(!filtroClique.valor) return true;
-      if(filtroClique.campo === 'parecer') return (d.parecer === filtroClique.valor) || (filtroClique.valor === "Não Procedente" && d.parecer.includes("Não"));
+      if(filtroClique.campo === 'parecer') {
+          return (d.parecer === filtroClique.valor) || (filtroClique.valor === "Não Procedente" && d.parecer.includes("Não"));
+      }
       return d[filtroClique.campo] === filtroClique.valor;
     });
     renderizar(filtrados, false);
@@ -167,6 +165,7 @@
   function abrirModal(id = null) {
     document.getElementById('formRegistro').reset();
     document.getElementById('edit-id-original').value = id || "";
+    document.getElementById('modalTitle').innerText = id ? "Editar Registro" : "Novo Registro";
     if(id) {
       const item = dadosOriginais.find(d => d.id.toString() === id.toString());
       if(item) {
@@ -189,10 +188,11 @@
   function editarRegistro(id) { abrirModal(id); }
 
   async function excluirRegistro(id) {
-    if(!confirm("Deseja realmente excluir permanentemente o registro " + id + "?")) return;
+    if(!confirm("Tem certeza que deseja excluir permanentemente o registro " + id + "?")) return;
     document.getElementById('loader').style.display = 'flex';
     fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: "DELETE", id: id }) })
-      .then(() => iniciar());
+      .then(() => iniciar())
+      .catch(() => alert("Erro ao excluir."));
   }
 
   async function salvar() {
@@ -218,7 +218,8 @@
     };
     document.getElementById('loader').style.display = 'flex';
     fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) })
-      .then(() => { fecharModal(); iniciar(); });
+      .then(() => { fecharModal(); iniciar(); })
+      .catch(() => alert("Erro ao salvar."));
   }
 
   const toBase64 = file => new Promise(res => {
@@ -226,6 +227,8 @@
     reader.readAsDataURL(file);
     reader.onload = () => res(reader.result);
   });
+
+  function limparFiltros() { filtroClique = { campo: null, valor: null }; renderizar(dadosOriginais, true); }
 </script>
 </body>
 </html>
