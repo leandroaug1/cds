@@ -1,4 +1,4 @@
-const ID_PLANILHA = "1rU7ETLF7vxQY3mQNFjVSpVmWts6lcZltzb22GQWy9sQ";
+const ID_PLANILHA = "1rU7ETLF7vxQY3mQNFjVSpVmWts6lcZltzb22GQWy9sQ"; // Substitua pelo seu ID real
 
 function doGet(e) {
   try {
