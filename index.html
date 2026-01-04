@@ -23,7 +23,7 @@
     .chart-box { background: white; border-radius: 6px; padding: 15px; flex: 1; position: relative; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
     .chart-header { font-size: 13px; font-weight: bold; margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 8px; display: flex; justify-content: space-between; }
     .filter-badge { font-size: 9px; background: #e74c3c; color: white; padding: 2px 6px; border-radius: 10px; }
-    table { width: 100%; border-collapse: collapse; background: white; font-size: 10px; }
+    table { width: 100%; border-collapse: collapse; background: white; font-size: 11px; }
     th { background: #f8f9fa; padding: 10px; text-align: left; border-bottom: 2px solid #eee; position: sticky; top: 0; }
     td { padding: 8px 10px; border-bottom: 1px solid #f1f3f4; }
     .filter-row { display: none; background: #eaeff2; }
@@ -37,7 +37,7 @@
 </head>
 <body>
 
-  <div id="loading"><div class="spinner"></div><div id="statusText">Processando dados reais...</div></div>
+  <div id="loading"><div class="spinner"></div><div id="statusText">Conectando ao Banco de Dados...</div></div>
 
   <div class="header">
     <h1><span class="material-icons">analytics</span> SAP Quality Dashboard</h1>
@@ -49,8 +49,8 @@
 
   <div class="main-content">
     <div class="kpi-grid">
-      <div class="card"><div class="card-title">Cds</div><div class="card-value" id="kpi-total">-</div></div>
-      <div class="card" style="border-left-color:#e74c3c"><div class="card-title">Peças</div><div class="card-value" id="kpi-escape">-</div></div>
+      <div class="card"><div class="card-title">Cds Registradas</div><div class="card-value" id="kpi-total">-</div></div>
+      <div class="card" style="border-left-color:#e74c3c"><div class="card-title">Peças Segregadas</div><div class="card-value" id="kpi-escape">-</div></div>
       <div class="card" style="border-left-color:#2ecc71"><div class="card-title">Procedentes</div><div class="card-value" id="kpi-proc">-</div></div>
       <div class="card" style="border-left-color:#f1c40f"><div class="card-title">Não Procedentes</div><div class="card-value" id="kpi-nproc">-</div></div>
     </div>
@@ -124,8 +124,10 @@
     google.charts.setOnLoadCallback(iniciar);
 
     var dadosBrutos = [];
-    var fP = null, fA = null;
-    const URL_API = "SUA_URL_DA_API_AQUI"; 
+    var filtroBI_P = null, filtroBI_A = null;
+    
+    // URL da sua API atualizada
+    const URL_API = "https://script.google.com/macros/s/AKfycbzd6xE3BY9jqEOeP06wqUu46kPcyVxEi3c7rwQzsWYHCWLbOuZrkOPyuXZJpJ7bUlb-Rw/exec";
 
     function iniciar() {
       document.getElementById('loading').style.display='flex';
@@ -133,20 +135,21 @@
         dadosBrutos = res; atualizarDashboard();
         document.getElementById('loading').style.display='none';
       }).catch(err => {
-        document.getElementById('statusText').innerText = "Erro: Verifique as permissões da API.";
-        document.getElementById('statusText').style.color = "red";
+         document.getElementById('statusText').innerText = "Erro ao carregar dados. Verifique a Permissão 'Qualquer pessoa'.";
+         document.getElementById('statusText').style.color = "red";
       });
     }
 
     function atualizarDashboard() {
       const inputs = document.querySelectorAll('.filter-input');
       const filtrados = dadosBrutos.filter(i => {
-        // CORREÇÃO CROSS-FILTER (Comparação Exata)
-        if(fP) {
-          if (fP === "Procedente" && i.parecer !== "Procedente") return false;
-          if (fP === "Não Procedente" && i.parecer !== "Não Procedente") return false;
+        // CORREÇÃO DO CROSS-FILTER (Comparação Exata)
+        if(filtroBI_P) {
+          if (filtroBI_P === "Procedente" && i.parecer !== "Procedente") return false;
+          if (filtroBI_P === "Não Procedente" && i.parecer !== "Não Procedente") return false;
         }
-        if(fA && i.aplic !== fA) return false;
+        if(filtroBI_A && i.aplic !== filtroBI_A) return false;
+        
         let cols = ['cd','os','pn','oc','aplic','dataVisual','qtd','parecer'];
         for(let idx=0; idx<8; idx++) {
           let v = (inputs[idx].value || "").toLowerCase().trim();
@@ -155,8 +158,8 @@
         return true;
       });
       renderKPIs(filtrados); renderTable(filtrados); renderCharts(filtrados);
-      document.getElementById('badgeP').style.display = fP ? 'inline' : 'none';
-      document.getElementById('badgeA').style.display = fA ? 'inline' : 'none';
+      document.getElementById('badgeP').style.display = filtroBI_P ? 'inline' : 'none';
+      document.getElementById('badgeA').style.display = filtroBI_A ? 'inline' : 'none';
     }
 
     function renderTable(d) {
@@ -176,7 +179,7 @@
       let chartP = new google.visualization.PieChart(document.getElementById('div_rosca'));
       google.visualization.events.addListener(chartP, 'select', () => {
         let s = chartP.getSelection();
-        if(s.length > 0) { fP = s[0].row === 0 ? "Procedente" : "Não Procedente"; atualizarDashboard(); }
+        if(s.length > 0) { filtroBI_P = s[0].row === 0 ? "Procedente" : "Não Procedente"; atualizarDashboard(); }
       });
       chartP.draw(google.visualization.arrayToDataTable([['P', 'Q'],['Procedente', p],['Não Procedente', np]]), { pieHole: 0.5, colors: ['#2ecc71','#f1c40f'], chartArea:{width:'90%', height:'80%'}, legend:{position:'bottom', textStyle:{fontSize:10}} });
 
@@ -185,7 +188,7 @@
       let chartA = new google.visualization.BarChart(document.getElementById('div_barras'));
       google.visualization.events.addListener(chartA, 'select', () => {
         let s = chartA.getSelection();
-        if(s.length > 0) { fA = barData[s[0].row+1][0]; atualizarDashboard(); }
+        if(s.length > 0) { filtroBI_A = barData[s[0].row+1][0]; atualizarDashboard(); }
       });
       chartA.draw(google.visualization.arrayToDataTable(barData), { legend:'none', colors:['#2c3e50'], chartArea:{left:140, width:'100%', height:'80%'}, vAxis:{textStyle:{fontSize:10}}, hAxis:{textStyle:{fontSize:10}} });
     }
@@ -198,9 +201,9 @@
     }
 
     function toggleFiltros() { let r = document.getElementById('rowFiltros'); r.style.display = r.style.display==='table-row' ? 'none' : 'table-row'; }
-    function fecharModal() { document.getElementById('modalForm').style.display='none'; }
     function abrirNovo() { document.getElementById('formCad').reset(); document.getElementById('f_id').value=""; document.getElementById('modalForm').style.display='flex'; }
-    function limparBI() { fP = null; fA = null; document.querySelectorAll('.filter-input').forEach(i => i.value=""); atualizarDashboard(); }
+    function fecharModal() { document.getElementById('modalForm').style.display='none'; }
+    function limparBI() { filtroBI_P = null; filtroBI_A = null; document.querySelectorAll('.filter-input').forEach(i => i.value=""); atualizarDashboard(); }
 
     function editar(id) {
       let i = dadosBrutos.find(x => x.idLinha == id);
