@@ -3,20 +3,21 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Escapes Aero | BI Dashboard</title>
+  <title>Escapes Aero | Dashboard Gestão</title>
   <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
   <style>
-    :root { 
-      --bi-blue: #118DFF; --bi-teal: #01B8AA; --bi-orange: #E66C37; --bi-gray: #f3f2f1; 
-    }
+    :root { --bi-blue: #118DFF; --bi-teal: #01B8AA; --bi-orange: #E66C37; --bi-gray: #f3f2f1; }
     body { font-family: 'Segoe UI', sans-serif; background: var(--bi-gray); margin: 0; }
-    .header { background: #004a99; color: white; padding: 15px 25px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    .header { background: #004a99; color: white; padding: 15px 25px; display: flex; justify-content: space-between; align-items: center; }
     
     .btn-group { display: flex; gap: 8px; }
     .btn { border: none; padding: 10px 18px; font-weight: bold; border-radius: 4px; cursor: pointer; transition: 0.3s; }
+    .btn-new { background: #00ce64; color: white; }
     .btn-update { background: #f2c811; color: #333; }
     .btn-clear { background: white; border: 1px solid #ccc; color: #333; }
-    .btn:hover { opacity: 0.8; }
+    
+    .btn-edit { background: #ffc107; color: black; padding: 5px 10px; font-size: 11px; margin-right: 5px; }
+    .btn-del { background: #e81123; color: white; padding: 5px 10px; font-size: 11px; }
 
     .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; padding: 15px; }
     .kpi-card { background: white; padding: 15px; border-radius: 4px; text-align: center; border-bottom: 5px solid var(--bi-blue); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
@@ -32,7 +33,13 @@
     table { width: 100%; border-collapse: collapse; font-size: 13px; }
     th { background: #f8f9fa; padding: 12px; text-align: left; border-bottom: 2px solid var(--bi-blue); }
     td { padding: 10px; border-bottom: 1px solid #eee; }
-    tr:hover { background: #f1f7ff; }
+
+    /* Modal Form */
+    #modalForm { display:none; position:fixed; z-index:1000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.6); }
+    .modal-content { background:white; margin:2% auto; padding:25px; width:450px; border-radius:8px; max-height: 90vh; overflow-y: auto; }
+    .form-group { margin-bottom: 12px; }
+    .form-group label { display:block; font-weight:bold; margin-bottom: 4px; font-size: 12px; }
+    .form-group input, .form-group select { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
     
     #loader { position: fixed; inset: 0; background: rgba(255,255,255,0.8); z-index: 9999; display: none; flex-direction: column; justify-content: center; align-items: center; }
     .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--bi-blue); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
@@ -41,21 +48,22 @@
 </head>
 <body>
 
-<div id="loader"><div class="spinner"></div><h3>Sincronizando...</h3></div>
+<div id="loader"><div class="spinner"></div><h3>Processando...</h3></div>
 
 <div class="header">
   <h2 style="margin:0">Escapes Aero | Dashboard</h2>
   <div class="btn-group">
+    <button class="btn btn-new" onclick="abrirModal()">+ NOVO REGISTRO</button>
     <button class="btn btn-update" onclick="iniciar()">ATUALIZAR</button>
     <button class="btn btn-clear" onclick="limparFiltros()">LIMPAR FILTROS</button>
   </div>
 </div>
 
 <div class="kpi-row">
-  <div class="kpi-card"><div style="color:#666; font-size:12px;">VOL. TOTAL</div><div id="k-total" class="kpi-value">-</div></div>
-  <div class="kpi-card"><div style="color:#666; font-size:12px;">QTD ESCAPE</div><div id="k-escape" class="kpi-value" style="color:var(--bi-blue)">-</div></div>
-  <div class="kpi-card"><div style="color:#666; font-size:12px;">PROCEDENTES</div><div id="k-proc" class="kpi-value" style="color:var(--bi-teal)">-</div></div>
-  <div class="kpi-card"><div style="color:#666; font-size:12px;">NÃO PROC.</div><div id="k-nproc" class="kpi-value" style="color:var(--bi-orange)">-</div></div>
+  <div class="kpi-card">VOL. TOTAL<div id="k-total" class="kpi-value">-</div></div>
+  <div class="kpi-card">QTD ESCAPE<div id="k-escape" class="kpi-value" style="color:var(--bi-blue)">-</div></div>
+  <div class="kpi-card">PROCEDENTES<div id="k-proc" class="kpi-value" style="color:var(--bi-teal)">-</div></div>
+  <div class="kpi-card">NÃO PROC.<div id="k-nproc" class="kpi-value" style="color:var(--bi-orange)">-</div></div>
 </div>
 
 <div class="charts-row">
@@ -78,10 +86,35 @@
 <div class="table-container">
   <table>
     <thead>
-      <tr><th>CD</th><th>OS</th><th>PN</th><th>OC</th><th>APLIC.</th><th>DATA</th><th>QTD</th><th>PARECER</th></tr>
+      <tr><th>CD</th><th>OS</th><th>PN</th><th>OC</th><th>APLIC.</th><th>DATA</th><th>QTD</th><th>PARECER</th><th>AÇÕES</th></tr>
     </thead>
     <tbody id="corpoTabela"></tbody>
   </table>
+</div>
+
+<div id="modalForm">
+  <div class="modal-content">
+    <h3 id="modalTitle">Novo Registro</h3>
+    <form id="formRegistro">
+      <input type="hidden" id="edit-id-original">
+      <div class="form-group"><label>CD:</label><input type="text" id="in-cd" required></div>
+      <div class="form-group"><label>OS:</label><input type="text" id="in-os"></div>
+      <div class="form-group"><label>PN:</label><input type="text" id="in-pn"></div>
+      <div class="form-group"><label>OC:</label><input type="text" id="in-oc"></div>
+      <div class="form-group"><label>Aplicação:</label><input type="text" id="in-aplic"></div>
+      <div class="form-group"><label>Data:</label><input type="date" id="in-data" required></div>
+      <div class="form-group"><label>Quantidade:</label><input type="number" id="in-qtd" value="1"></div>
+      <div class="form-group">
+        <label>Parecer:</label>
+        <select id="in-parecer">
+          <option value="Procedente">Procedente</option>
+          <option value="Não Procedente">Não Procedente</option>
+        </select>
+      </div>
+      <button type="button" onclick="salvar()" class="btn btn-new" style="width:100%">SALVAR</button>
+      <button type="button" onclick="fecharModal()" style="width:100%; background:none; border:none; color:gray; cursor:pointer; margin-top:10px">Cancelar</button>
+    </form>
+  </div>
 </div>
 
 <script>
@@ -98,11 +131,8 @@
       const resp = await fetch(SCRIPT_URL);
       dadosOriginais = await resp.json();
       renderizar(dadosOriginais, true);
-    } catch (e) {
-      alert("Erro ao carregar dados.");
-    } finally {
-      document.getElementById('loader').style.display = 'none';
-    }
+    } catch (e) { alert("Erro ao carregar dados."); }
+    finally { document.getElementById('loader').style.display = 'none'; }
   }
 
   function renderizar(dados, atualizarGraficos) {
@@ -116,6 +146,10 @@
         <td>${d.cd}</td><td>${d.os}</td><td>${d.pn}</td><td>${d.oc}</td><td>${d.aplic}</td>
         <td>${d.dataExibicao}</td><td>${d.qtd}</td>
         <td style="font-weight:bold; color:${d.parecer === 'Procedente' ? '#01B8AA' : '#E66C37'}">${d.parecer}</td>
+        <td>
+          <button class="btn btn-edit" onclick="editarRegistro('${d.id}')">Editar</button>
+          <button class="btn btn-del" onclick="excluirRegistro('${d.id}')">Excluir</button>
+        </td>
       </tr>
     `).join('');
 
@@ -123,12 +157,7 @@
   }
 
   function desenharGraficos(dados) {
-    const commonOptions = { 
-      fontName: 'Segoe UI', 
-      chartArea: { width: '85%', height: '75%' }, 
-      legend: { position: 'bottom' },
-      animation: { startup: true, duration: 800, easing: 'out' }
-    };
+    const commonOptions = { fontName: 'Segoe UI', chartArea: { width: '85%', height: '75%' }, legend: { position: 'bottom' } };
 
     const pData = google.visualization.arrayToDataTable([
       ['Parecer', 'Qtd'],
@@ -136,33 +165,20 @@
       ['Não Procedente', dadosOriginais.filter(d => d.parecer.includes("Não")).length]
     ]);
     const pie = new google.visualization.PieChart(document.getElementById('pie_parecer'));
-    
     google.visualization.events.addListener(pie, 'select', () => {
       const sel = pie.getSelection()[0];
-      if(sel) {
-        filtroClique = { campo: 'parecer', valor: pData.getValue(sel.row, 0) };
-        filtrar();
-      }
+      if(sel) { filtroClique = { campo: 'parecer', valor: pData.getValue(sel.row, 0) }; filtrar(); }
     });
     pie.draw(pData, { ...commonOptions, title: 'Análise por Parecer', pieHole: 0.45, colors: ['#01B8AA', '#E66C37'] });
 
     const aplicMap = {};
     dadosOriginais.forEach(d => { aplicMap[d.aplic] = (aplicMap[d.aplic] || 0) + 1; });
-    
-    const bData = google.visualization.arrayToDataTable([
-      ['Aplicação', 'Qtd'],
-      ...Object.entries(aplicMap).sort((a,b) => b[1]-a[1]).slice(0, 10)
-    ]);
+    const bData = google.visualization.arrayToDataTable([['Aplicação', 'Qtd'], ...Object.entries(aplicMap).sort((a,b) => b[1]-a[1]).slice(0, 10)]);
     const bar = new google.visualization.BarChart(document.getElementById('bar_aplic'));
-    
     google.visualization.events.addListener(bar, 'select', () => {
       const sel = bar.getSelection()[0];
-      if(sel) {
-        filtroClique = { campo: 'aplic', valor: bData.getValue(sel.row, 0) };
-        filtrar();
-      }
+      if(sel) { filtroClique = { campo: 'aplic', valor: bData.getValue(sel.row, 0) }; filtrar(); }
     });
-    // left: 180 garante nitidez nos nomes das aplicações
     bar.draw(bData, { ...commonOptions, title: 'Top 10 Aplicações', colors: ['#118DFF'], legend: 'none', chartArea: { left: 180, width: '70%', height: '80%' } });
   }
 
@@ -170,34 +186,73 @@
     const cd = document.getElementById('fil-cd').value.toLowerCase();
     const pn = document.getElementById('fil-pn').value.toLowerCase();
     const parecerSelect = document.getElementById('fil-parecer').value;
-    const start = document.getElementById('date-start').value;
-    const end = document.getElementById('date-end').value;
 
     const filtrados = dadosOriginais.filter(d => {
       const matchInputs = d.cd.toLowerCase().includes(cd) && d.pn.toLowerCase().includes(pn) && (parecerSelect === "" || d.parecer === parecerSelect);
-      let matchDate = true;
-      if(start) matchDate = matchDate && (d.dataRaw >= start);
-      if(end) matchDate = matchDate && (d.dataRaw <= end);
-      
       let matchClique = true;
       if(filtroClique.valor) {
         if(filtroClique.campo === 'parecer') {
-          // Correção: Garante que "Procedente" e "Não Procedente" filtrem corretamente
           matchClique = (d.parecer === filtroClique.valor) || (filtroClique.valor === "Não Procedente" && d.parecer.includes("Não"));
         } else {
           matchClique = d[filtroClique.campo] === filtroClique.valor;
         }
       }
-      return matchInputs && matchDate && matchClique;
+      return matchInputs && matchClique;
     });
-
     renderizar(filtrados, false);
   }
 
-  function limparFiltros() {
-    filtroClique = { campo: null, valor: null };
-    document.querySelectorAll('input, select').forEach(i => i.value = "");
-    renderizar(dadosOriginais, true);
+  function limparFiltros() { filtroClique = { campo: null, valor: null }; document.querySelectorAll('input, select').forEach(i => i.value = ""); renderizar(dadosOriginais, true); }
+
+  function abrirModal(id = null) {
+    document.getElementById('formRegistro').reset();
+    document.getElementById('edit-id-original').value = id || "";
+    document.getElementById('modalTitle').innerText = id ? "Editar Registro" : "Novo Registro";
+    if(id) {
+      const item = dadosOriginais.find(d => d.id == id);
+      document.getElementById('in-cd').value = item.cd;
+      document.getElementById('in-os').value = item.os;
+      document.getElementById('in-pn').value = item.pn;
+      document.getElementById('in-oc').value = item.oc;
+      document.getElementById('in-aplic').value = item.aplic;
+      document.getElementById('in-data').value = item.dataRaw;
+      document.getElementById('in-qtd').value = item.qtd;
+      document.getElementById('in-parecer').value = item.parecer;
+    }
+    document.getElementById('modalForm').style.display = 'block';
+  }
+
+  function fecharModal() { document.getElementById('modalForm').style.display = 'none'; }
+
+  function editarRegistro(id) { abrirModal(id); }
+
+  async function excluirRegistro(id) {
+    if(!confirm("Tem certeza que deseja excluir o registro " + id + "?")) return;
+    document.getElementById('loader').style.display = 'flex';
+    fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: "DELETE", id: id }) })
+      .then(() => iniciar())
+      .finally(() => document.getElementById('loader').style.display = 'none');
+  }
+
+  async function salvar() {
+    const payload = {
+      action: document.getElementById('edit-id-original').value ? "EDIT" : "ADD",
+      idOriginal: document.getElementById('edit-id-original').value,
+      cd: document.getElementById('in-cd').value,
+      os: document.getElementById('in-os').value,
+      pn: document.getElementById('in-pn').value,
+      oc: document.getElementById('in-oc').value,
+      aplic: document.getElementById('in-aplic').value,
+      data: document.getElementById('in-data').value,
+      qtd: document.getElementById('in-qtd').value,
+      parecer: document.getElementById('in-parecer').value
+    };
+    
+    document.getElementById('loader').style.display = 'flex';
+    fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) })
+      .then(() => { fecharModal(); iniciar(); })
+      .catch(() => alert("Erro ao salvar."))
+      .finally(() => document.getElementById('loader').style.display = 'none');
   }
 </script>
 </body>
