@@ -2,53 +2,43 @@
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Escapes Aero | Dashboard BI Gestão</title>
+  <title>Escapes Aero | Dashboard BI</title>
   <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
   <style>
     :root { --bi-blue: #118DFF; --bi-teal: #01B8AA; --bi-orange: #E66C37; --bi-gray: #f3f2f1; }
     body { font-family: 'Segoe UI', sans-serif; background: var(--bi-gray); margin: 0; }
-    .header { background: #004a99; color: white; padding: 15px 25px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    .header { background: #004a99; color: white; padding: 15px 25px; display: flex; justify-content: space-between; align-items: center; }
     .btn { border: none; padding: 10px 18px; font-weight: bold; border-radius: 4px; cursor: pointer; transition: 0.3s; }
     .btn-new { background: #00ce64; color: white; }
-    .btn-edit { background: #ffc107; color: black; padding: 5px 10px; font-size: 11px; margin-right: 5px; }
-    .btn-del { background: #e81123; color: white; padding: 5px 10px; font-size: 11px; }
-
+    .btn-edit { background: #ffc107; color: black; padding: 5px 10px; font-size: 11px; margin-right: 5px; border:none; cursor:pointer;}
+    .btn-del { background: #e81123; color: white; padding: 5px 10px; font-size: 11px; border:none; cursor:pointer;}
     .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; padding: 15px; }
     .kpi-card { background: white; padding: 15px; border-radius: 4px; text-align: center; border-bottom: 5px solid var(--bi-blue); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
     .kpi-value { font-size: 28px; font-weight: bold; margin-top: 5px; }
-    
     .charts-row { display: grid; grid-template-columns: 1fr 1.5fr; gap: 15px; padding: 0 15px 15px; }
     .chart-box { background: white; padding: 15px; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); height: 400px; border: 1px solid #e0e0e0; }
-
-    .filter-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; padding: 10px 15px; background: #fff; margin: 0 15px 10px; border-radius: 4px; border: 1px solid #ddd; }
-    .filter-row input, .filter-row select { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; font-size: 13px; }
-
     .table-container { background: white; margin: 0 15px 20px; border-radius: 4px; overflow-x: auto; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
     table { width: 100%; border-collapse: collapse; font-size: 13px; }
     th { background: #f8f9fa; padding: 12px; text-align: left; border-bottom: 2px solid var(--bi-blue); }
     td { padding: 10px; border-bottom: 1px solid #eee; }
-
     #modalForm { display:none; position:fixed; z-index:1000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.6); }
     .modal-content { background:white; margin:2% auto; padding:25px; width:450px; border-radius:8px; max-height: 90vh; overflow-y: auto; }
     .form-group { margin-bottom: 12px; }
     .form-group label { display:block; font-weight:bold; margin-bottom: 4px; font-size: 12px; }
     .form-group input, .form-group select { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-    
     #loader { position: fixed; inset: 0; background: rgba(255,255,255,0.8); z-index: 9999; display: none; flex-direction: column; justify-content: center; align-items: center; }
     .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--bi-blue); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
   </style>
 </head>
 <body>
 
-<div id="loader"><div class="spinner"></div><h3>Processando...</h3></div>
+<div id="loader"><div class="spinner"></div><h3>Sincronizando...</h3></div>
 
 <div class="header">
   <h2 style="margin:0">Escapes Aero | Dashboard</h2>
   <div class="btn-group">
     <button class="btn btn-new" onclick="abrirModal()">+ NOVO REGISTRO</button>
     <button class="btn" style="background:#f2c811" onclick="iniciar()">ATUALIZAR</button>
-    <button class="btn" style="background:white; border:1px solid #ccc" onclick="limparFiltros()">LIMPAR FILTROS</button>
   </div>
 </div>
 
@@ -64,18 +54,6 @@
   <div class="chart-box" id="bar_aplic"></div>
 </div>
 
-<div class="filter-row">
-  <input type="text" id="fil-cd" placeholder="Filtrar CD..." onkeyup="filtrar()">
-  <input type="text" id="fil-pn" placeholder="Filtrar PN..." onkeyup="filtrar()">
-  <select id="fil-parecer" onchange="filtrar()">
-    <option value="">Parecer: Todos</option>
-    <option value="Procedente">Procedente</option>
-    <option value="Não Procedente">Não Procedente</option>
-  </select>
-  <input type="date" id="date-start" onchange="filtrar()">
-  <input type="date" id="date-end" onchange="filtrar()">
-</div>
-
 <div class="table-container">
   <table>
     <thead>
@@ -87,7 +65,7 @@
 
 <div id="modalForm">
   <div class="modal-content">
-    <h3 id="modalTitle">Novo Registro</h3>
+    <h3 id="modalTitle">Registro</h3>
     <form id="formRegistro">
       <input type="hidden" id="edit-id-original">
       <input type="hidden" id="anexo1-existente">
@@ -98,10 +76,10 @@
       <div class="form-group"><label>OC:</label><input type="text" id="in-oc"></div>
       <div class="form-group"><label>Aplicação:</label><input type="text" id="in-aplic"></div>
       <div class="form-group"><label>Data:</label><input type="date" id="in-data" required></div>
-      <div class="form-group"><label>Quantidade:</label><input type="number" id="in-qtd" value="1"></div>
+      <div class="form-group"><label>Qtd:</label><input type="number" id="in-qtd" value="1"></div>
       <div class="form-group"><label>Parecer:</label><select id="in-parecer"><option value="Procedente">Procedente</option><option value="Não Procedente">Não Procedente</option></select></div>
-      <div class="form-group"><label>Anexo 1 (Imagem):</label><input type="file" id="f1" accept="image/*"></div>
-      <div class="form-group"><label>Anexo 2 (PPTX/Documento):</label><input type="file" id="f2" accept=".pptx, .ppt, .pdf, .docx"></div>
+      <div class="form-group"><label>Anexo 1 (Foto):</label><input type="file" id="f1"></div>
+      <div class="form-group"><label>Anexo 2 (Doc/PPTX):</label><input type="file" id="f2"></div>
       <button type="button" onclick="salvar()" class="btn btn-new" style="width:100%">SALVAR</button>
       <button type="button" onclick="fecharModal()" style="width:100%; border:none; background:none; color:gray; cursor:pointer; margin-top:10px">Cancelar</button>
     </form>
@@ -109,8 +87,7 @@
 </div>
 
 <script>
-  // ATENÇÃO: COLOQUE AQUI A SUA URL DE IMPLANTAÇÃO
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwZ0aaF_nK7i6EQVQXtdt2tLfk9ZrmJfgA2SSo5CEG2BvXafljmNspM1GG9_C-iJjkp/exec"; 
+  const SCRIPT_URL = "SUA_URL_DO_APPS_SCRIPT_AQUI"; 
   let dadosOriginais = [];
   let filtroClique = { campo: null, valor: null };
 
@@ -123,7 +100,7 @@
       const resp = await fetch(SCRIPT_URL);
       dadosOriginais = await resp.json();
       renderizar(dadosOriginais, true);
-    } catch (e) { alert("Erro ao carregar dados."); }
+    } catch (e) { console.error(e); }
     finally { document.getElementById('loader').style.display = 'none'; }
   }
 
@@ -143,32 +120,23 @@
           ${d.anexo2 ? `<a href="${d.anexo2}" target="_blank">📊 Doc</a>` : ''}
         </td>
         <td>
-          <button class="btn btn-edit" onclick="editarRegistro('${d.id}')">Editar</button>
-          <button class="btn btn-del" onclick="excluirRegistro('${d.id}')">Excluir</button>
+          <button class="btn-edit" onclick="editarRegistro('${d.id}')">Editar</button>
+          <button class="btn-del" onclick="excluirRegistro('${d.id}')">Excluir</button>
         </td>
       </tr>
     `).join('');
-
     if (atualizarGraficos) desenharGraficos(dados);
   }
 
   function desenharGraficos(dados) {
-    const commonOptions = { fontName: 'Segoe UI', chartArea: { width: '85%', height: '75%' }, legend: { position: 'bottom' } };
-
-    const pData = google.visualization.arrayToDataTable([
-      ['Parecer', 'Qtd'],
-      ['Procedente', dadosOriginais.filter(d => d.parecer === "Procedente").length],
-      ['Não Procedente', dadosOriginais.filter(d => d.parecer.includes("Não")).length]
-    ]);
+    const commonOptions = { fontName: 'Segoe UI', chartArea: {width:'85%', height:'75%'}, legend:{position:'bottom'} };
+    const pData = google.visualization.arrayToDataTable([['Parecer', 'Qtd'],['Procedente', dadosOriginais.filter(d => d.parecer === "Procedente").length],['Não Procedente', dadosOriginais.filter(d => d.parecer.includes("Não")).length]]);
     const pie = new google.visualization.PieChart(document.getElementById('pie_parecer'));
     google.visualization.events.addListener(pie, 'select', () => {
       const sel = pie.getSelection()[0];
-      if(sel) { 
-        filtroClique = { campo: 'parecer', valor: pData.getValue(sel.row, 0) }; 
-        filtrar(); 
-      }
+      if(sel) { filtroClique = { campo: 'parecer', valor: pData.getValue(sel.row, 0) }; filtrar(); }
     });
-    pie.draw(pData, { ...commonOptions, title: 'Análise por Parecer', pieHole: 0.45, colors: ['#01B8AA', '#E66C37'] });
+    pie.draw(pData, { ...commonOptions, title: 'Parecer', pieHole: 0.45, colors: ['#01B8AA', '#E66C37'] });
 
     const aplicMap = {};
     dadosOriginais.forEach(d => { aplicMap[d.aplic] = (aplicMap[d.aplic] || 0) + 1; });
@@ -176,64 +144,37 @@
     const bar = new google.visualization.BarChart(document.getElementById('bar_aplic'));
     google.visualization.events.addListener(bar, 'select', () => {
       const sel = bar.getSelection()[0];
-      if(sel) { 
-        filtroClique = { campo: 'aplic', valor: bData.getValue(sel.row, 0) }; 
-        filtrar(); 
-      }
+      if(sel) { filtroClique = { campo: 'aplic', valor: bData.getValue(sel.row, 0) }; filtrar(); }
     });
-    bar.draw(bData, { ...commonOptions, title: 'Top 10 Aplicações', colors: ['#118DFF'], legend: 'none', chartArea: { left: 180, width: '70%', height: '80%' } });
+    bar.draw(bData, { ...commonOptions, title: 'Top Aplicações', colors: ['#118DFF'], legend: 'none', chartArea: { left: 180, width: '70%', height: '80%' } });
   }
 
   function filtrar() {
-    const cd = document.getElementById('fil-cd').value.toLowerCase();
-    const pn = document.getElementById('fil-pn').value.toLowerCase();
-    const parecerSelect = document.getElementById('fil-parecer').value;
-    const start = document.getElementById('date-start').value;
-    const end = document.getElementById('date-end').value;
-
     const filtrados = dadosOriginais.filter(d => {
-      const matchInputs = d.cd.toLowerCase().includes(cd) && d.pn.toLowerCase().includes(pn) && (parecerSelect === "" || d.parecer === parecerSelect);
-      let matchDate = true;
-      if(start) matchDate = matchDate && (d.dataRaw >= start);
-      if(end) matchDate = matchDate && (d.dataRaw <= end);
-      
-      let matchClique = true;
-      if(filtroClique.valor) {
-        if(filtroClique.campo === 'parecer') {
-          matchClique = (d.parecer === filtroClique.valor) || (filtroClique.valor === "Não Procedente" && d.parecer.includes("Não"));
-        } else {
-          matchClique = d[filtroClique.campo] === filtroClique.valor;
-        }
-      }
-      return matchInputs && matchDate && matchClique;
+      if(!filtroClique.valor) return true;
+      if(filtroClique.campo === 'parecer') return (d.parecer === filtroClique.valor) || (filtroClique.valor === "Não Procedente" && d.parecer.includes("Não"));
+      return d[filtroClique.campo] === filtroClique.valor;
     });
     renderizar(filtrados, false);
-  }
-
-  function limparFiltros() { 
-    filtroClique = { campo: null, valor: null }; 
-    document.querySelectorAll('input, select').forEach(i => i.value = ""); 
-    renderizar(dadosOriginais, true); 
   }
 
   function abrirModal(id = null) {
     document.getElementById('formRegistro').reset();
     document.getElementById('edit-id-original').value = id || "";
-    document.getElementById('anexo1-existente').value = "";
-    document.getElementById('anexo2-existente').value = "";
-    document.getElementById('modalTitle').innerText = id ? "Editar Registro" : "Novo Registro";
     if(id) {
-      const item = dadosOriginais.find(d => d.id == id);
-      document.getElementById('in-cd').value = item.cd;
-      document.getElementById('in-os').value = item.os;
-      document.getElementById('in-pn').value = item.pn;
-      document.getElementById('in-oc').value = item.oc;
-      document.getElementById('in-aplic').value = item.aplic;
-      document.getElementById('in-data').value = item.dataRaw;
-      document.getElementById('in-qtd').value = item.qtd;
-      document.getElementById('in-parecer').value = item.parecer;
-      document.getElementById('anexo1-existente').value = item.anexo1;
-      document.getElementById('anexo2-existente').value = item.anexo2;
+      const item = dadosOriginais.find(d => d.id.toString() === id.toString());
+      if(item) {
+        document.getElementById('in-cd').value = item.cd;
+        document.getElementById('in-os').value = item.os;
+        document.getElementById('in-pn').value = item.pn;
+        document.getElementById('in-oc').value = item.oc;
+        document.getElementById('in-aplic').value = item.aplic;
+        document.getElementById('in-data').value = item.dataRaw;
+        document.getElementById('in-qtd').value = item.qtd;
+        document.getElementById('in-parecer').value = item.parecer;
+        document.getElementById('anexo1-existente').value = item.anexo1;
+        document.getElementById('anexo2-existente').value = item.anexo2;
+      }
     }
     document.getElementById('modalForm').style.display = 'block';
   }
@@ -242,15 +183,15 @@
   function editarRegistro(id) { abrirModal(id); }
 
   async function excluirRegistro(id) {
-    if(!confirm("Deseja excluir o registro " + id + "?")) return;
+    if(!confirm("Excluir registro " + id + "?")) return;
     document.getElementById('loader').style.display = 'flex';
-    fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: "DELETE", id: id }) }).then(() => iniciar());
+    fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: "DELETE", id: id }) })
+      .then(() => iniciar());
   }
 
   async function salvar() {
     const f1 = document.getElementById('f1').files[0];
     const f2 = document.getElementById('f2').files[0];
-    
     const payload = {
       action: document.getElementById('edit-id-original').value ? "EDIT" : "ADD",
       idOriginal: document.getElementById('edit-id-original').value,
@@ -269,12 +210,9 @@
       anexo2Base64: f2 ? await toBase64(f2) : null,
       anexo2Nome: f2 ? f2.name : ""
     };
-    
     document.getElementById('loader').style.display = 'flex';
     fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) })
-      .then(() => { fecharModal(); iniciar(); })
-      .catch(() => alert("Erro ao salvar."))
-      .finally(() => document.getElementById('loader').style.display = 'none');
+      .then(() => { fecharModal(); iniciar(); });
   }
 
   const toBase64 = file => new Promise(res => {
