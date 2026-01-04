@@ -2,8 +2,7 @@
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SAP Quality Dashboard - Live</title>
+  <title>SAP Quality Dashboard - Live API</title>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
   <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
@@ -16,8 +15,10 @@
 
     .header { background-color: #2c3e50; color: white; padding: 15px 25px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
     .header h1 { margin: 0; font-size: 18px; display: flex; align-items: center; gap: 10px; }
-    .btn-limpar { padding: 8px 16px; border-radius: 4px; border: none; background: #f1c40f; color: #2c3e50; font-weight: bold; cursor: pointer; font-size: 11px; transition: 0.3s; }
-    .btn-limpar:hover { background: #d4ac0d; }
+    
+    .btn { padding: 8px 12px; border-radius: 4px; border: none; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 5px; font-size: 11px; }
+    .btn-yellow { background-color: #f1c40f; color: #2c3e50; }
+    .btn-outline { background: transparent; border: 1px solid rgba(255,255,255,0.5); color: white; }
 
     .main-content { padding: 15px; max-width: 1400px; margin: 0 auto; }
     .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 15px; }
@@ -26,59 +27,104 @@
     .card-value { font-size: 24px; font-weight: bold; margin-top: 4px; }
 
     .charts-row { display: flex; gap: 15px; margin-bottom: 15px; height: 350px; }
-    .chart-box { background: white; border-radius: 6px; padding: 12px; flex: 1; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-    .chart-header { font-size: 13px; font-weight: bold; margin-bottom: 8px; border-bottom: 1px solid #eee; padding-bottom: 8px; display:flex; justify-content:space-between; align-items:center; color:#2c3e50; }
-    .filter-badge { font-size: 9px; background: #e74c3c; color: white; padding: 2px 6px; border-radius: 10px; font-weight: normal; }
+    .chart-box { background: white; border-radius: 6px; padding: 12px; flex: 1; box-shadow: 0 1px 3px rgba(0,0,0,0.1); position: relative; }
+    .chart-header { font-size: 13px; font-weight: bold; margin-bottom: 8px; border-bottom: 1px solid #eee; padding-bottom: 8px; display:flex; justify-content:space-between; align-items:center; }
 
     .table-section { background: white; border-radius: 6px; padding: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-    .table-container { overflow-x: auto; max-height: 380px; }
+    .table-container { overflow-x: auto; max-height: 400px; }
     table { width: 100%; border-collapse: collapse; font-size: 10px; }
     th { background: #f8f9fa; padding: 10px; text-align: left; border-bottom: 2px solid #eee; position: sticky; top: 0; }
     td { padding: 8px 10px; border-bottom: 1px solid #f1f3f4; }
-    tr:hover { background-color: #fcfcfc; }
+    
+    .filter-row { display: none; background: #eaeff2; }
+    .filter-input { width: 100%; padding: 4px; border: 1px solid #ccc; border-radius: 3px; font-size: 10px; box-sizing: border-box; }
+
+    /* Modal */
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; display: none; justify-content: center; align-items: center; }
+    .modal-content { background: white; padding: 25px; border-radius: 8px; width: 450px; }
+    .form-group { margin-bottom: 10px; }
+    .form-input { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
   </style>
 </head>
 <body>
 
-  <div id="loading">
-    <div class="spinner"></div>
-    <div id="status" style="font-size: 12px; color: #555;">Sincronizando BI com a Planilha Real...</div>
-  </div>
+  <div id="loading"><div class="spinner"></div><div>Carregando dados da Planilha...</div></div>
 
   <div class="header">
     <h1><span class="material-icons">analytics</span> SAP Quality Dashboard</h1>
-    <button class="btn-limpar" onclick="limparBI()">Limpar Filtros</button>
+    <div class="header-controls">
+      <button class="btn btn-outline" onclick="limparBI()">Limpar BI</button>
+      <button class="btn btn-yellow" onclick="abrirNovo()"><span class="material-icons">add</span> Novo Registro</button>
+    </div>
   </div>
 
   <div class="main-content">
     <div class="kpi-grid">
-      <div class="card" style="border-left-color:#3498db"><div class="card-title">Cds Registradas</div><div class="card-value" id="kpi-total">-</div></div>
-      <div class="card" style="border-left-color:#e74c3c"><div class="card-title">Peças Segregadas</div><div class="card-value" id="kpi-escape">-</div></div>
+      <div class="card"><div class="card-title">Cds</div><div class="card-value" id="kpi-total">-</div></div>
+      <div class="card" style="border-left-color:#e74c3c"><div class="card-title">Peças</div><div class="card-value" id="kpi-escape">-</div></div>
       <div class="card" style="border-left-color:#2ecc71"><div class="card-title">Procedentes</div><div class="card-value" id="kpi-proc">-</div></div>
-      <div class="card" style="border-left-color:#f1c40f"><div class="card-title">Não Procedentes</div><div class="card-value" id="kpi-nproc">-</div></div>
+      <div class="card" style="border-left-color:#f1c40f"><div class="card-title">Não Proc.</div><div class="card-value" id="kpi-nproc">-</div></div>
     </div>
 
     <div class="charts-row">
       <div class="chart-box" style="flex: 0 0 320px;">
-        <div class="chart-header">Parecer Técnico <span id="badgeParecer" class="filter-badge" style="display:none">Filtro Ativo</span></div>
+        <div class="chart-header">Parecer Técnico</div>
         <div id="div_rosca" style="height:280px"></div>
       </div>
       <div class="chart-box">
-        <div class="chart-header">Ocorrências por Aplicação (Top 10) <span id="badgeAplic" class="filter-badge" style="display:none">Filtro Ativo</span></div>
+        <div class="chart-header">Ocorrências por Aplicação</div>
         <div id="div_barras" style="height:280px"></div>
       </div>
     </div>
 
     <div class="table-section">
-      <div class="chart-header"><span>Detalhamento dos Dados</span></div>
+      <div class="chart-header">
+        <span>Detalhamento dos Dados</span>
+        <button class="btn" style="background:#eee; color:#555" onclick="toggleFiltros()">Pesquisa Avançada</button>
+      </div>
       <div class="table-container">
         <table id="tabelaDados">
           <thead>
-            <tr><th>CD</th><th>OS</th><th>PN</th><th>OC</th><th>Aplicação</th><th>Data</th><th>Qtd</th><th>Parecer</th></tr>
+            <tr><th>CD</th><th>OS</th><th>PN</th><th>OC</th><th>Aplic</th><th>Data</th><th>Qtd</th><th>Parecer</th><th>Anexos</th><th>Ações</th></tr>
+            <tr id="rowFiltros" class="filter-row">
+              <th><input type="text" class="filter-input" onkeyup="atualizarDashboard()"></th>
+              <th><input type="text" class="filter-input" onkeyup="atualizarDashboard()"></th>
+              <th><input type="text" class="filter-input" onkeyup="atualizarDashboard()"></th>
+              <th><input type="text" class="filter-input" onkeyup="atualizarDashboard()"></th>
+              <th><input type="text" class="filter-input" onkeyup="atualizarDashboard()"></th>
+              <th><input type="text" class="filter-input" onkeyup="atualizarDashboard()"></th>
+              <th><input type="text" class="filter-input" onkeyup="atualizarDashboard()"></th>
+              <th><input type="text" class="filter-input" onkeyup="atualizarDashboard()"></th>
+              <th></th><th></th>
+            </tr>
           </thead>
           <tbody></tbody>
         </table>
       </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modalForm">
+    <div class="modal-content">
+      <h3 id="modalTitle">Registro de CD</h3>
+      <form id="formCad">
+        <input type="hidden" id="f_id">
+        <div class="form-group"><label>Número CD</label><input type="text" id="f_cd" class="form-input" required></div>
+        <div class="form-group"><label>Aplicação</label><input type="text" id="f_aplic" class="form-input" required></div>
+        <div style="display:flex; gap:10px">
+          <div class="form-group" style="flex:1"><label>Data</label><input type="date" id="f_data" class="form-input" required></div>
+          <div class="form-group" style="flex:1"><label>Qtd</label><input type="number" id="f_qtd" class="form-input" required></div>
+        </div>
+        <div class="form-group">
+          <label>Parecer</label>
+          <select id="f_parecer" class="form-input">
+            <option value="Procedente">Procedente</option>
+            <option value="Não Procedente">Não Procedente</option>
+          </select>
+        </div>
+        <button type="button" class="btn btn-yellow" style="width:100%" onclick="salvar()">SALVAR NO BANCO</button>
+        <button type="button" style="width:100%; border:none; background:none; margin-top:10px; cursor:pointer" onclick="fecharModal()">Cancelar</button>
+      </form>
     </div>
   </div>
 
@@ -90,94 +136,39 @@
     var filtroParecer = null;
     var filtroAplic = null;
 
-    // URL da sua API fornecida
-    const URL_API = "https://script.google.com/macros/s/AKfycbwg326dWxibWovft-u_qwiOq5PwLE4MlwPryQH1TF7qTI9EJAY_PgolEEHCz629tk628Q/exec"; 
+    // --- COLOQUE SUA URL DO GOOGLE SCRIPTS AQUI ---
+    const URL_API = "SUA_URL_DA_API_AQUI"; 
 
     function iniciar() {
-      fetch(URL_API)
-        .then(res => res.json())
-        .then(json => {
-          dadosBrutos = json;
-          atualizarDashboard();
-          document.getElementById('loading').style.display = 'none';
-        })
-        .catch(err => {
-          console.error(err);
-          document.getElementById('status').innerText = "Erro ao conectar com a planilha real. Verifique as permissões da API.";
-          document.getElementById('status').style.color = "red";
-        });
+      fetch(URL_API).then(res => res.json()).then(res => {
+        dadosBrutos = res;
+        atualizarDashboard();
+        document.getElementById('loading').style.display='none';
+      }).catch(err => alert("Erro ao carregar API: " + err));
     }
 
     function atualizarDashboard() {
+      const inputs = document.querySelectorAll('.filter-input');
       const filtrados = dadosBrutos.filter(i => {
-        // Lógica de Filtro por Parecer Técnico
         if(filtroParecer) {
-          let pPlanilha = String(i.parecer).toLowerCase().trim();
+          let pPlanilha = i.parecer.toLowerCase().trim();
           let pFiltro = filtroParecer.toLowerCase().trim();
-          // Garante que "Procedente" não pegue "Não Procedente"
           if(pFiltro === "procedente" && pPlanilha.includes("não")) return false;
           if(!pPlanilha.includes(pFiltro)) return false;
         }
-        // Filtro por Aplicação
         if(filtroAplic && i.aplic !== filtroAplic) return false;
+        
+        let chaves = ['cd','os','pn','oc','aplic','dataVisual','qtd','parecer'];
+        for(let idx=0; idx<chaves.length; idx++) {
+          let val = inputs[idx].value.toLowerCase().trim();
+          if(val && !String(i[chaves[idx]]).toLowerCase().includes(val)) return false;
+        }
         return true;
       });
 
       renderKPIs(filtrados);
       renderTable(filtrados);
       renderCharts(filtrados);
-      
-      document.getElementById('badgeParecer').style.display = filtroParecer ? 'inline' : 'none';
-      document.getElementById('badgeAplic').style.display = filtroAplic ? 'inline' : 'none';
-    }
-
-    function renderCharts(d) {
-      // --- GRÁFICO DE ROSCA ---
-      let p = d.filter(i => String(i.parecer).toLowerCase().trim() === "procedente").length;
-      let np = d.filter(i => String(i.parecer).toLowerCase().includes("não")).length;
-      let dataP = google.visualization.arrayToDataTable([['Parecer', 'Qtd'],['Procedente', p],['Não Procedente', np]]);
-      
-      let chartP = new google.visualization.PieChart(document.getElementById('div_rosca'));
-      google.visualization.events.addListener(chartP, 'select', () => {
-        let sel = chartP.getSelection();
-        if(sel.length > 0) {
-          // Filtro por índice da fatia (0 = Procedente, 1 = Não Procedente)
-          filtroParecer = (sel[0].row === 0) ? "Procedente" : "Não Procedente";
-          atualizarDashboard();
-        }
-      });
-      chartP.draw(dataP, { pieHole: 0.5, colors: ['#2ecc71','#f1c40f'], chartArea:{width:'90%', height:'80%'}, legend: {position:'bottom', textStyle:{fontSize:10}} });
-
-      // --- GRÁFICO DE BARRAS ---
-      let apps = {};
-      d.forEach(i => { if(i.aplic) apps[i.aplic] = (apps[i.aplic]||0)+1; });
-      let dataA = new google.visualization.DataTable();
-      dataA.addColumn('string', 'Aplicação');
-      dataA.addColumn('number', 'Qtd');
-      Object.keys(apps).sort((a,b)=>apps[b]-apps[a]).slice(0,10).forEach(k => dataA.addRow([k, apps[k]]));
-
-      let chartA = new google.visualization.BarChart(document.getElementById('div_barras'));
-      google.visualization.events.addListener(chartA, 'select', () => {
-        let sel = chartA.getSelection();
-        if(sel.length > 0) {
-          filtroAplic = dataA.getValue(sel[0].row, 0);
-          atualizarDashboard();
-        }
-      });
-      chartA.draw(dataA, {
-        legend: 'none', 
-        colors: ['#2c3e50'], 
-        chartArea: { left: 140, right: 30, top: 10, bottom: 40, width: '100%', height: '80%' }, 
-        vAxis: { textStyle: {fontSize: 10} }, 
-        hAxis: { textStyle: {fontSize: 10}, gridlines: {color: '#f3f3f3'} } 
-      });
-    }
-
-    function renderKPIs(d) {
-      document.getElementById('kpi-total').innerText = d.length;
-      document.getElementById('kpi-escape').innerText = d.reduce((a, b) => a + Number(b.qtd || 0), 0);
-      document.getElementById('kpi-proc').innerText = d.filter(i => String(i.parecer).toLowerCase().trim() === "procedente").length;
-      document.getElementById('kpi-nproc').innerText = d.filter(i => String(i.parecer).toLowerCase().includes("não")).length;
     }
 
     function renderTable(d) {
@@ -185,16 +176,67 @@
       tbody.innerHTML = d.map(i => `
         <tr>
           <td>${i.cd}</td><td>${i.os}</td><td>${i.pn}</td><td>${i.oc}</td><td>${i.aplic}</td>
-          <td>${i.dataVisual}</td><td><b>${i.qtd}</b></td><td>${i.parecer}</td>
+          <td>${i.dataVisual}</td><td>${i.qtd}</td><td>${i.parecer}</td>
+          <td style="text-align:center">
+            ${i.linkImg ? `<a href="${i.linkImg}" target="_blank" title="Ver Imagem">📷</a>` : ''}
+            ${i.linkPpt ? `<a href="${i.linkPpt}" target="_blank" title="Ver PPT">📄</a>` : ''}
+          </td>
+          <td>
+            <span class="material-icons" style="color:#f39c12; cursor:pointer; font-size:16px" onclick="editar(${i.idLinha})">edit</span>
+            <span class="material-icons" style="color:#e74c3c; cursor:pointer; font-size:16px" onclick="deletar(${i.idLinha}, '${i.cd}')">delete</span>
+          </td>
         </tr>
       `).join('');
     }
 
-    function limparBI() { 
-      filtroParecer = null; 
-      filtroAplic = null; 
-      atualizarDashboard(); 
+    function renderCharts(d) {
+      let p = d.filter(i => i.parecer === "Procedente").length;
+      let np = d.filter(i => i.parecer.includes("Não")).length;
+      let dataP = google.visualization.arrayToDataTable([['Parecer', 'Qtd'],['Procedente', p],['Não Procedente', np]]);
+      let chartP = new google.visualization.PieChart(document.getElementById('div_rosca'));
+      google.visualization.events.addListener(chartP, 'select', () => {
+        let sel = chartP.getSelection();
+        if(sel.length > 0) { filtroParecer = (sel[0].row === 0) ? "Procedente" : "Não Procedente"; atualizarDashboard(); }
+      });
+      chartP.draw(dataP, { pieHole: 0.5, colors: ['#2ecc71','#f1c40f'], chartArea:{width:'90%', height:'80%'}, legend: {position:'bottom', textStyle:{fontSize:10}} });
+
+      let apps = {};
+      d.forEach(i => { if(i.aplic) apps[i.aplic] = (apps[i.aplic]||0)+1; });
+      let dataA = new google.visualization.DataTable();
+      dataA.addColumn('string', 'Aplicação');
+      dataA.addColumn('number', 'Qtd');
+      Object.keys(apps).sort((a,b)=>apps[b]-apps[a]).slice(0,10).forEach(k => dataA.addRow([k, apps[k]]));
+      let chartA = new google.visualization.BarChart(document.getElementById('div_barras'));
+      google.visualization.events.addListener(chartA, 'select', () => {
+        let sel = chartA.getSelection();
+        if(sel.length > 0) { filtroAplic = dataA.getValue(sel[0].row, 0); atualizarDashboard(); }
+      });
+      chartA.draw(dataA, { legend: 'none', colors: ['#2c3e50'], chartArea: { left: 140, width: '100%', height: '80%' }, vAxis: { textStyle: {fontSize: 10} }, hAxis: { textStyle: {fontSize: 10} } });
     }
+
+    function renderKPIs(d) {
+      document.getElementById('kpi-total').innerText = d.length;
+      document.getElementById('kpi-escape').innerText = d.reduce((a, b) => a + Number(b.qtd), 0);
+      document.getElementById('kpi-proc').innerText = d.filter(i => i.parecer === "Procedente").length;
+      document.getElementById('kpi-nproc').innerText = d.filter(i => i.parecer.includes("Não")).length;
+    }
+
+    function toggleFiltros() { let r = document.getElementById('rowFiltros'); r.style.display = (r.style.display==='table-row')?'none':'table-row'; }
+    function abrirNovo() { document.getElementById('formCad').reset(); document.getElementById('f_id').value=""; document.getElementById('modalForm').style.display='flex'; }
+    function fecharModal() { document.getElementById('modalForm').style.display='none'; }
+    function editar(id) {
+      let i = dadosBrutos.find(x => x.idLinha == id);
+      document.getElementById('f_id').value = i.idLinha;
+      document.getElementById('f_cd').value = i.cd;
+      document.getElementById('f_aplic').value = i.aplic;
+      document.getElementById('f_data').value = i.dataInput;
+      document.getElementById('f_qtd').value = i.qtd;
+      document.getElementById('f_parecer').value = i.parecer;
+      document.getElementById('modalForm').style.display='flex';
+    }
+    function deletar(id, cd) { if(confirm("Deseja excluir a CD " + cd + "?")) { /* Comando fetch p/ API deletar */ } }
+    function limparBI() { filtroParecer = null; filtroAplic = null; atualizarDashboard(); }
+    function salvar() { /* Comando fetch p/ API salvar */ }
   </script>
 </body>
 </html>
