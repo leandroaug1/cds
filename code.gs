@@ -17,7 +17,6 @@ function doPost(e) {
     const sheet = ss.getSheetByName("ControleCds"); //
     const data = JSON.parse(e.postData.contents);
     
-    // Garante que os dados mais recentes sejam lidos
     SpreadsheetApp.flush();
     const rows = sheet.getDataRange().getValues();
 
@@ -67,7 +66,7 @@ function getDadosDashboard() {
   const sheet = ss.getSheetByName("ControleCds");
   const values = sheet.getDataRange().getValues();
   
-  // CORREÇÃO: Filtra linhas para ignorar as que não têm CD (evita erro de data 1969)
+  // FILTRO: Ignora linhas onde o CD está vazio (evita erro de data 1969)
   const dados = values.filter((linha, index) => {
     return index > 0 && linha[0].toString().trim() !== "";
   }); //
