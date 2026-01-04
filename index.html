@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8">
-  <title>Escapes Aero | Dashboard BI</title>
+  <title>Escapes Aero | Dashboard BI Gestão</title>
   <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
   <style>
     :root { --bi-blue: #118DFF; --bi-teal: #01B8AA; --bi-orange: #E66C37; --bi-gray: #f3f2f1; }
@@ -10,7 +10,6 @@
     .header { background: #004a99; color: white; padding: 15px 25px; display: flex; justify-content: space-between; align-items: center; }
     .btn { border: none; padding: 10px 18px; font-weight: bold; border-radius: 4px; cursor: pointer; transition: 0.3s; }
     .btn-new { background: #00ce64; color: white; }
-    .btn-update { background: #f2c811; color: #333; }
     .btn-edit { background: #ffc107; color: black; padding: 5px 10px; font-size: 11px; margin-right: 5px; border:none; border-radius:4px; cursor:pointer;}
     .btn-del { background: #e81123; color: white; padding: 5px 10px; font-size: 11px; border:none; border-radius:4px; cursor:pointer;}
     .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; padding: 15px; }
@@ -30,13 +29,14 @@
 </head>
 <body>
 
-<div id="loader"><div class="spinner"></div><h3>Sincronizando...</h3></div>
+<div id="loader"><div class="spinner"></div><h3>Processando...</h3></div>
 
 <div class="header">
   <h2 style="margin:0">Escapes Aero | Dashboard</h2>
   <div class="btn-group">
     <button class="btn btn-new" onclick="abrirModal()">+ NOVO REGISTRO</button>
-    <button class="btn btn-update" onclick="iniciar()">ATUALIZAR</button>
+    <button class="btn" style="background:#f2c811" onclick="iniciar()">ATUALIZAR</button>
+    <button class="btn" style="background:white; border:1px solid #ccc" onclick="limparFiltros()">LIMPAR FILTROS</button>
   </div>
 </div>
 
@@ -83,7 +83,6 @@
 </div>
 
 <script>
-  // ATENÇÃO: COLE SUA URL DE IMPLANTAÇÃO ABAIXO
   const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwZ0aaF_nK7i6EQVQXtdt2tLfk9ZrmJfgA2SSo5CEG2BvXafljmNspM1GG9_C-iJjkp/exec"; 
   let dadosOriginais = [];
   let filtroClique = { campo: null, valor: null };
@@ -97,7 +96,7 @@
       const resp = await fetch(SCRIPT_URL);
       dadosOriginais = await resp.json();
       renderizar(dadosOriginais, true);
-    } catch (e) { alert("Erro ao carregar dados. Refaça a implantação do Apps Script."); }
+    } catch (e) { alert("Erro ao carregar dados."); }
     finally { document.getElementById('loader').style.display = 'none'; }
   }
 
@@ -133,7 +132,7 @@
       const sel = pie.getSelection()[0];
       if(sel) { filtroClique = { campo: 'parecer', valor: pData.getValue(sel.row, 0) }; filtrar(); }
     });
-    pie.draw(pData, { ...commonOptions, title: 'Parecer', pieHole: 0.45, colors: ['#01B8AA', '#E66C37'] });
+    pie.draw(pData, { ...commonOptions, title: 'Análise por Parecer', pieHole: 0.45, colors: ['#01B8AA', '#E66C37'] });
 
     const aplicMap = {};
     dadosOriginais.forEach(d => { aplicMap[d.aplic] = (aplicMap[d.aplic] || 0) + 1; });
@@ -143,7 +142,7 @@
       const sel = bar.getSelection()[0];
       if(sel) { filtroClique = { campo: 'aplic', valor: bData.getValue(sel.row, 0) }; filtrar(); }
     });
-    bar.draw(bData, { ...commonOptions, title: 'Top Aplicações', colors: ['#118DFF'], legend: 'none', chartArea: { left: 180, width: '70%', height: '80%' } });
+    bar.draw(bData, { ...commonOptions, title: 'Top 10 Aplicações', colors: ['#118DFF'], legend: 'none', chartArea: { left: 180, width: '70%', height: '80%' } });
   }
 
   function filtrar() {
@@ -155,9 +154,12 @@
     renderizar(filtrados, false);
   }
 
+  function limparFiltros() { filtroClique = { campo: null, valor: null }; renderizar(dadosOriginais, true); }
+
   function abrirModal(id = null) {
     document.getElementById('formRegistro').reset();
     document.getElementById('edit-id-original').value = id || "";
+    document.getElementById('modalTitle').innerText = id ? "Editar Registro" : "Novo Registro";
     if(id) {
       const item = dadosOriginais.find(d => d.id.toString() === id.toString());
       if(item) {
@@ -173,12 +175,12 @@
   }
 
   function fecharModal() { document.getElementById('modalForm').style.display = 'none'; }
+  function editarRegistro(id) { abrirModal(id); }
 
   async function excluirRegistro(id) {
-    if(!confirm("Excluir permanentemente o registro " + id + "?")) return;
+    if(!confirm("Deseja realmente excluir o registro " + id + "?")) return;
     document.getElementById('loader').style.display = 'flex';
-    fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: "DELETE", id: id }) })
-      .then(() => iniciar());
+    fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: "DELETE", id: id }) }).then(() => iniciar());
   }
 
   async function salvar() {
