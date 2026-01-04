@@ -44,7 +44,7 @@ function doPost(e) {
       }
     } 
     else if (data.action === "DELETE") {
-      // Percorre de baixo para cima para remover a linha física sem bugar os índices
+      // Percorre de baixo para cima para garantir a remoção física da linha
       for (let i = rows.length - 1; i >= 1; i--) {
         if (rows[i][0].toString().trim() === data.id.toString().trim()) {
           sheet.deleteRow(i + 1);
@@ -66,7 +66,7 @@ function getDadosDashboard() {
   const sheet = ss.getSheetByName("ControleCds");
   const values = sheet.getDataRange().getValues();
   
-  // Filtra linhas para ignorar as que não têm CD (evita erro de data 1969)
+  // Filtro para ignorar linhas sem CD (evita o erro de data 1969)
   const dados = values.filter((linha, index) => {
     return index > 0 && linha[0] !== "" && linha[0] !== null;
   });
