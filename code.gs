@@ -16,7 +16,7 @@ function doPost(e) {
     const data = JSON.parse(e.postData.contents);
     const rows = sheet.getDataRange().getValues();
 
-    // Processamento de Anexos
+    // Processamento de Anexos: Mantém o atual se um novo não for enviado na edição
     let url1 = data.anexo1Base64 ? uploadParaDrive(data.anexo1Base64, data.anexo1Nome) : (data.anexo1Existente || "");
     let url2 = data.anexo2Base64 ? uploadParaDrive(data.anexo2Base64, data.anexo2Nome) : (data.anexo2Existente || "");
 
@@ -57,12 +57,12 @@ function getDadosDashboard() {
   const ss = SpreadsheetApp.openById(ID_PLANILHA);
   const sheet = ss.getSheetByName("ControleCds");
   const dados = sheet.getDataRange().getValues();
-  dados.shift();
+  dados.shift(); // Remove cabeçalho
 
   return dados.map(linha => {
     let d = linha[5];
     return {
-      id: linha[0],
+      id: linha[0], // CD como identificador
       cd: String(linha[0] || ""),
       os: String(linha[1] || ""),
       pn: String(linha[2] || ""),
