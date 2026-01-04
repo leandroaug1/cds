@@ -7,17 +7,17 @@ function doGet(e) {
       .setMimeType(ContentService.MimeType.JSON); //
   } catch (err) {
     return ContentService.createTextOutput(JSON.stringify({ "status": "erro", "msg": err.toString() }))
-      .setMimeType(ContentService.MimeType.JSON);
+      .setMimeType(ContentService.MimeType.JSON); //
   }
 }
 
 function doPost(e) {
   try {
-    const data = JSON.parse(e.postData.contents);
     const ss = SpreadsheetApp.openById(ID_PLANILHA);
     const sheet = ss.getSheetByName("ControleCds"); //
+    const data = JSON.parse(e.postData.contents);
     
-    // Garante que os dados mais recentes sejam lidos antes de processar
+    // Garante que os dados mais recentes sejam lidos
     SpreadsheetApp.flush();
     const rows = sheet.getDataRange().getValues();
 
@@ -45,10 +45,10 @@ function doPost(e) {
       }
     } 
     else if (data.action === "DELETE") {
-      // CORREÇÃO: Percorre de baixo para cima para remover a linha física
+      // CORREÇÃO: Percorre de baixo para cima para remover a linha física inteira
       for (let i = rows.length - 1; i >= 1; i--) {
         if (rows[i][0].toString().trim() === data.id.toString().trim()) {
-          sheet.deleteRow(i + 1); // Remove a linha inteira da planilha
+          sheet.deleteRow(i + 1); // Remove a linha física
           break; 
         }
       }
@@ -67,9 +67,9 @@ function getDadosDashboard() {
   const sheet = ss.getSheetByName("ControleCds");
   const values = sheet.getDataRange().getValues();
   
-  // CORREÇÃO: Filtra linhas onde o campo CD está vazio para evitar erro de data 1969
+  // CORREÇÃO: Filtra linhas para ignorar as que não têm CD (evita erro de data 1969)
   const dados = values.filter((linha, index) => {
-    return index > 0 && linha[0] !== "" && linha[0] !== null;
+    return index > 0 && linha[0].toString().trim() !== "";
   }); //
 
   return dados.map(linha => {
