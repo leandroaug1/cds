@@ -16,7 +16,7 @@ function doPost(e) {
     const data = JSON.parse(e.postData.contents);
     const rows = sheet.getDataRange().getValues();
 
-    // Processamento de Anexos: Mantém o atual se um novo não for enviado na edição
+    // Gestão de Anexos: Mantém o existente se um novo não for enviado
     let url1 = data.anexo1Base64 ? uploadParaDrive(data.anexo1Base64, data.anexo1Nome) : (data.anexo1Existente || "");
     let url2 = data.anexo2Base64 ? uploadParaDrive(data.anexo2Base64, data.anexo2Nome) : (data.anexo2Existente || "");
 
@@ -29,7 +29,8 @@ function doPost(e) {
     } 
     else if (data.action === "EDIT") {
       for (let i = 1; i < rows.length; i++) {
-        if (rows[i][0] == data.idOriginal) {
+        // Localiza pela chave original (CD) convertida para String para evitar erros
+        if (rows[i][0].toString() === data.idOriginal.toString()) {
           sheet.getRange(i + 1, 1, 1, 10).setValues([[
             data.cd, data.os, data.pn, data.oc, data.aplic, 
             new Date(data.data + "T12:00:00"), data.qtd, data.parecer, url1, url2
@@ -39,8 +40,9 @@ function doPost(e) {
       }
     } 
     else if (data.action === "DELETE") {
-      for (let i = 1; i < rows.length; i++) {
-        if (rows[i][0] == data.id) {
+      // CORREÇÃO: Percorre de baixo para cima para não bugar os índices ao remover linhas
+      for (let i = rows.length - 1; i >= 1; i--) {
+        if (rows[i][0].toString() === data.id.toString()) {
           sheet.deleteRow(i + 1);
           break;
         }
@@ -56,13 +58,15 @@ function doPost(e) {
 function getDadosDashboard() {
   const ss = SpreadsheetApp.openById(ID_PLANILHA);
   const sheet = ss.getSheetByName("ControleCds");
-  const dados = sheet.getDataRange().getValues();
-  dados.shift(); // Remove cabeçalho
+  const values = sheet.getDataRange().getValues();
+  
+  // Filtra linhas vazias para evitar erros de data (31/12/1969)
+  const dados = values.filter((linha, index) => index > 0 && linha[0] !== "");
 
   return dados.map(linha => {
     let d = linha[5];
     return {
-      id: linha[0], // CD como identificador
+      id: linha[0], // Usamos o CD como ID
       cd: String(linha[0] || ""),
       os: String(linha[1] || ""),
       pn: String(linha[2] || ""),
