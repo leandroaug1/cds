@@ -78,7 +78,7 @@
       <div class="form-group"><label>Data:</label><input type="date" id="in-data" required></div>
       <div class="form-group"><label>Qtd:</label><input type="number" id="in-qtd" value="1"></div>
       <div class="form-group"><label>Parecer:</label><select id="in-parecer"><option value="Procedente">Procedente</option><option value="Não Procedente">Não Procedente</option></select></div>
-      <div class="form-group"><label>Anexo 1 (Foto):</label><input type="file" id="f1"></div>
+      <div class="form-group"><label>Anexo 1 (Imagem):</label><input type="file" id="f1" accept="image/*"></div>
       <div class="form-group"><label>Anexo 2 (Doc/PPTX):</label><input type="file" id="f2"></div>
       <button type="button" onclick="salvar()" class="btn btn-new" style="width:100%">SALVAR</button>
       <button type="button" onclick="fecharModal()" style="width:100%; border:none; background:none; color:gray; cursor:pointer; margin-top:10px">Cancelar</button>
@@ -87,7 +87,8 @@
 </div>
 
 <script>
-  const SCRIPT_URL = "SUA_URL_DO_APPS_SCRIPT_AQUI"; 
+  // COLOQUE A SUA URL DE EXECUÇÃO DO APPS SCRIPT ABAIXO
+  const SCRIPT_URL = "SUA_URL_AQUI/exec"; 
   let dadosOriginais = [];
   let filtroClique = { campo: null, valor: null };
 
@@ -130,7 +131,12 @@
 
   function desenharGraficos(dados) {
     const commonOptions = { fontName: 'Segoe UI', chartArea: {width:'85%', height:'75%'}, legend:{position:'bottom'} };
-    const pData = google.visualization.arrayToDataTable([['Parecer', 'Qtd'],['Procedente', dadosOriginais.filter(d => d.parecer === "Procedente").length],['Não Procedente', dadosOriginais.filter(d => d.parecer.includes("Não")).length]]);
+    
+    const pData = google.visualization.arrayToDataTable([
+      ['Parecer', 'Qtd'],
+      ['Procedente', dadosOriginais.filter(d => d.parecer === "Procedente").length],
+      ['Não Procedente', dadosOriginais.filter(d => d.parecer.includes("Não")).length]
+    ]);
     const pie = new google.visualization.PieChart(document.getElementById('pie_parecer'));
     google.visualization.events.addListener(pie, 'select', () => {
       const sel = pie.getSelection()[0];
@@ -183,7 +189,7 @@
   function editarRegistro(id) { abrirModal(id); }
 
   async function excluirRegistro(id) {
-    if(!confirm("Excluir registro " + id + "?")) return;
+    if(!confirm("Deseja realmente excluir permanentemente o registro " + id + "?")) return;
     document.getElementById('loader').style.display = 'flex';
     fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: "DELETE", id: id }) })
       .then(() => iniciar());
