@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SAP Quality Dashboard - Live API</title>
+  <title>SAP Quality Dashboard - Live</title>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
   <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
@@ -16,41 +16,46 @@
 
     .header { background-color: #2c3e50; color: white; padding: 15px 25px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
     .header h1 { margin: 0; font-size: 18px; display: flex; align-items: center; gap: 10px; }
-    .btn { padding: 8px 12px; border-radius: 4px; border: none; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 5px; font-size: 11px; color: #2c3e50; background-color: #f1c40f; text-decoration: none; }
+    .btn-limpar { padding: 8px 16px; border-radius: 4px; border: none; background: #f1c40f; color: #2c3e50; font-weight: bold; cursor: pointer; font-size: 11px; transition: 0.3s; }
+    .btn-limpar:hover { background: #d4ac0d; }
 
     .main-content { padding: 15px; max-width: 1400px; margin: 0 auto; }
     .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 15px; }
     .card { background: white; padding: 12px; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-left: 4px solid #3498db; }
     .card-title { font-size: 9px; color: #7f8c8d; text-transform: uppercase; font-weight: bold; }
-    .card-value { font-size: 22px; font-weight: bold; margin-top: 4px; }
+    .card-value { font-size: 24px; font-weight: bold; margin-top: 4px; }
 
     .charts-row { display: flex; gap: 15px; margin-bottom: 15px; height: 350px; }
-    .chart-box { background: white; border-radius: 6px; padding: 12px; flex: 1; box-shadow: 0 1px 3px rgba(0,0,0,0.1); position: relative; }
+    .chart-box { background: white; border-radius: 6px; padding: 12px; flex: 1; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
     .chart-header { font-size: 13px; font-weight: bold; margin-bottom: 8px; border-bottom: 1px solid #eee; padding-bottom: 8px; display:flex; justify-content:space-between; align-items:center; color:#2c3e50; }
-    .filter-badge { font-size: 9px; background: #e74c3c; color: white; padding: 2px 6px; border-radius: 10px; }
+    .filter-badge { font-size: 9px; background: #e74c3c; color: white; padding: 2px 6px; border-radius: 10px; font-weight: normal; }
 
     .table-section { background: white; border-radius: 6px; padding: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
     .table-container { overflow-x: auto; max-height: 380px; }
     table { width: 100%; border-collapse: collapse; font-size: 10px; }
-    th { background: #f8f9fa; padding: 8px; text-align: left; border-bottom: 2px solid #eee; position: sticky; top: 0; }
-    td { padding: 6px 8px; border-bottom: 1px solid #f1f3f4; }
+    th { background: #f8f9fa; padding: 10px; text-align: left; border-bottom: 2px solid #eee; position: sticky; top: 0; }
+    td { padding: 8px 10px; border-bottom: 1px solid #f1f3f4; }
+    tr:hover { background-color: #fcfcfc; }
   </style>
 </head>
 <body>
 
-  <div id="loading"><div class="spinner"></div><div>Sincronizando com a Planilha...</div></div>
+  <div id="loading">
+    <div class="spinner"></div>
+    <div id="status" style="font-size: 12px; color: #555;">Sincronizando BI com a Planilha Real...</div>
+  </div>
 
   <div class="header">
-    <h1><span class="material-icons">analytics</span> SAP Quality Dashboard (Live)</h1>
-    <button class="btn" onclick="limparBI()">Limpar Filtros</button>
+    <h1><span class="material-icons">analytics</span> SAP Quality Dashboard</h1>
+    <button class="btn-limpar" onclick="limparBI()">Limpar Filtros</button>
   </div>
 
   <div class="main-content">
     <div class="kpi-grid">
-      <div class="card"><div class="card-title">Cds</div><div class="card-value" id="kpi-total">-</div></div>
-      <div class="card" style="border-left-color:#e74c3c"><div class="card-title">Peças</div><div class="card-value" id="kpi-escape">-</div></div>
+      <div class="card" style="border-left-color:#3498db"><div class="card-title">Cds Registradas</div><div class="card-value" id="kpi-total">-</div></div>
+      <div class="card" style="border-left-color:#e74c3c"><div class="card-title">Peças Segregadas</div><div class="card-value" id="kpi-escape">-</div></div>
       <div class="card" style="border-left-color:#2ecc71"><div class="card-title">Procedentes</div><div class="card-value" id="kpi-proc">-</div></div>
-      <div class="card" style="border-left-color:#f1c40f"><div class="card-title">Não Proc.</div><div class="card-value" id="kpi-nproc">-</div></div>
+      <div class="card" style="border-left-color:#f1c40f"><div class="card-title">Não Procedentes</div><div class="card-value" id="kpi-nproc">-</div></div>
     </div>
 
     <div class="charts-row">
@@ -59,16 +64,17 @@
         <div id="div_rosca" style="height:280px"></div>
       </div>
       <div class="chart-box">
-        <div class="chart-header">Aplicações (Top 10) <span id="badgeAplic" class="filter-badge" style="display:none">Filtro Ativo</span></div>
+        <div class="chart-header">Ocorrências por Aplicação (Top 10) <span id="badgeAplic" class="filter-badge" style="display:none">Filtro Ativo</span></div>
         <div id="div_barras" style="height:280px"></div>
       </div>
     </div>
 
     <div class="table-section">
+      <div class="chart-header"><span>Detalhamento dos Dados</span></div>
       <div class="table-container">
         <table id="tabelaDados">
           <thead>
-            <tr><th>CD</th><th>OS</th><th>PN</th><th>OC</th><th>Aplic</th><th>Data</th><th>Qtd</th><th>Parecer</th></tr>
+            <tr><th>CD</th><th>OS</th><th>PN</th><th>OC</th><th>Aplicação</th><th>Data</th><th>Qtd</th><th>Parecer</th></tr>
           </thead>
           <tbody></tbody>
         </table>
@@ -84,27 +90,35 @@
     var filtroParecer = null;
     var filtroAplic = null;
 
-    // --- COLOQUE A URL DA SUA IMPLANTAÇÃO GOOGLE AQUI ---
-    const URL_API_GOOGLE = "SUA_URL_AQUI/exec"; 
+    // URL da sua API fornecida
+    const URL_API = "https://script.google.com/macros/s/AKfycbwg326dWxibWovft-u_qwiOq5PwLE4MlwPryQH1TF7qTI9EJAY_PgolEEHCz629tk628Q/exec"; 
 
     function iniciar() {
-      fetch(URL_API_GOOGLE)
+      fetch(URL_API)
         .then(res => res.json())
         .then(json => {
           dadosBrutos = json;
           atualizarDashboard();
           document.getElementById('loading').style.display = 'none';
         })
-        .catch(err => alert("Erro ao carregar dados reais: " + err));
+        .catch(err => {
+          console.error(err);
+          document.getElementById('status').innerText = "Erro ao conectar com a planilha real. Verifique as permissões da API.";
+          document.getElementById('status').style.color = "red";
+        });
     }
 
     function atualizarDashboard() {
       const filtrados = dadosBrutos.filter(i => {
+        // Lógica de Filtro por Parecer Técnico
         if(filtroParecer) {
-          let p = i.parecer.toLowerCase();
-          if(filtroParecer === "Procedente" && p.includes("não")) return false;
-          if(!p.includes(filtroParecer.toLowerCase())) return false;
+          let pPlanilha = String(i.parecer).toLowerCase().trim();
+          let pFiltro = filtroParecer.toLowerCase().trim();
+          // Garante que "Procedente" não pegue "Não Procedente"
+          if(pFiltro === "procedente" && pPlanilha.includes("não")) return false;
+          if(!pPlanilha.includes(pFiltro)) return false;
         }
+        // Filtro por Aplicação
         if(filtroAplic && i.aplic !== filtroAplic) return false;
         return true;
       });
@@ -118,20 +132,23 @@
     }
 
     function renderCharts(d) {
-      let p = d.filter(i => i.parecer === "Procedente").length;
-      let np = d.filter(i => i.parecer.includes("Não")).length;
+      // --- GRÁFICO DE ROSCA ---
+      let p = d.filter(i => String(i.parecer).toLowerCase().trim() === "procedente").length;
+      let np = d.filter(i => String(i.parecer).toLowerCase().includes("não")).length;
       let dataP = google.visualization.arrayToDataTable([['Parecer', 'Qtd'],['Procedente', p],['Não Procedente', np]]);
+      
       let chartP = new google.visualization.PieChart(document.getElementById('div_rosca'));
-
       google.visualization.events.addListener(chartP, 'select', () => {
         let sel = chartP.getSelection();
         if(sel.length > 0) {
+          // Filtro por índice da fatia (0 = Procedente, 1 = Não Procedente)
           filtroParecer = (sel[0].row === 0) ? "Procedente" : "Não Procedente";
           atualizarDashboard();
         }
       });
       chartP.draw(dataP, { pieHole: 0.5, colors: ['#2ecc71','#f1c40f'], chartArea:{width:'90%', height:'80%'}, legend: {position:'bottom', textStyle:{fontSize:10}} });
 
+      // --- GRÁFICO DE BARRAS ---
       let apps = {};
       d.forEach(i => { if(i.aplic) apps[i.aplic] = (apps[i.aplic]||0)+1; });
       let dataA = new google.visualization.DataTable();
@@ -147,22 +164,37 @@
           atualizarDashboard();
         }
       });
-      chartA.draw(dataA, { legend:'none', colors:['#2c3e50'], chartArea:{left:120, right:30, top:10, bottom:40}, vAxis:{textStyle:{fontSize:10}}, hAxis:{textStyle:{fontSize:10}} });
+      chartA.draw(dataA, {
+        legend: 'none', 
+        colors: ['#2c3e50'], 
+        chartArea: { left: 140, right: 30, top: 10, bottom: 40, width: '100%', height: '80%' }, 
+        vAxis: { textStyle: {fontSize: 10} }, 
+        hAxis: { textStyle: {fontSize: 10}, gridlines: {color: '#f3f3f3'} } 
+      });
     }
 
     function renderKPIs(d) {
       document.getElementById('kpi-total').innerText = d.length;
-      document.getElementById('kpi-escape').innerText = d.reduce((a, b) => a + Number(b.qtd), 0);
-      document.getElementById('kpi-proc').innerText = d.filter(i => i.parecer === "Procedente").length;
-      document.getElementById('kpi-nproc').innerText = d.filter(i => i.parecer.includes("Não")).length;
+      document.getElementById('kpi-escape').innerText = d.reduce((a, b) => a + Number(b.qtd || 0), 0);
+      document.getElementById('kpi-proc').innerText = d.filter(i => String(i.parecer).toLowerCase().trim() === "procedente").length;
+      document.getElementById('kpi-nproc').innerText = d.filter(i => String(i.parecer).toLowerCase().includes("não")).length;
     }
 
     function renderTable(d) {
       const tbody = document.querySelector('#tabelaDados tbody');
-      tbody.innerHTML = d.map(i => `<tr><td>${i.cd}</td><td>${i.os}</td><td>${i.pn}</td><td>${i.oc}</td><td>${i.aplic}</td><td>${i.dataVisual}</td><td>${i.qtd}</td><td>${i.parecer}</td></tr>`).join('');
+      tbody.innerHTML = d.map(i => `
+        <tr>
+          <td>${i.cd}</td><td>${i.os}</td><td>${i.pn}</td><td>${i.oc}</td><td>${i.aplic}</td>
+          <td>${i.dataVisual}</td><td><b>${i.qtd}</b></td><td>${i.parecer}</td>
+        </tr>
+      `).join('');
     }
 
-    function limparBI() { filtroParecer = null; filtroAplic = null; atualizarDashboard(); }
+    function limparBI() { 
+      filtroParecer = null; 
+      filtroAplic = null; 
+      atualizarDashboard(); 
+    }
   </script>
 </body>
 </html>
