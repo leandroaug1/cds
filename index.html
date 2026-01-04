@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Escapes Aero | Dashboard BI</title>
+  <title>Escapes Aero | BI Dashboard</title>
   <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
   <style>
     :root { 
@@ -130,7 +130,6 @@
       animation: { startup: true, duration: 800, easing: 'out' }
     };
 
-    // Gráfico de Pizza (Parecer)
     const pData = google.visualization.arrayToDataTable([
       ['Parecer', 'Qtd'],
       ['Procedente', dadosOriginais.filter(d => d.parecer === "Procedente").length],
@@ -147,7 +146,6 @@
     });
     pie.draw(pData, { ...commonOptions, title: 'Análise por Parecer', pieHole: 0.45, colors: ['#01B8AA', '#E66C37'] });
 
-    // Gráfico de Barras (Aplicação) - NITIDEZ MELHORADA
     const aplicMap = {};
     dadosOriginais.forEach(d => { aplicMap[d.aplic] = (aplicMap[d.aplic] || 0) + 1; });
     
@@ -164,20 +162,19 @@
         filtrar();
       }
     });
-    // chartArea left: 180 garante que os nomes das aplicações fiquem visíveis
+    // left: 180 garante nitidez nos nomes das aplicações
     bar.draw(bData, { ...commonOptions, title: 'Top 10 Aplicações', colors: ['#118DFF'], legend: 'none', chartArea: { left: 180, width: '70%', height: '80%' } });
   }
 
   function filtrar() {
     const cd = document.getElementById('fil-cd').value.toLowerCase();
     const pn = document.getElementById('fil-pn').value.toLowerCase();
-    const parecer = document.getElementById('fil-parecer').value;
+    const parecerSelect = document.getElementById('fil-parecer').value;
     const start = document.getElementById('date-start').value;
     const end = document.getElementById('date-end').value;
 
     const filtrados = dadosOriginais.filter(d => {
-      const matchInputs = d.cd.toLowerCase().includes(cd) && d.pn.toLowerCase().includes(pn) && (parecer === "" || d.parecer === parecer);
-      
+      const matchInputs = d.cd.toLowerCase().includes(cd) && d.pn.toLowerCase().includes(pn) && (parecerSelect === "" || d.parecer === parecerSelect);
       let matchDate = true;
       if(start) matchDate = matchDate && (d.dataRaw >= start);
       if(end) matchDate = matchDate && (d.dataRaw <= end);
@@ -185,16 +182,16 @@
       let matchClique = true;
       if(filtroClique.valor) {
         if(filtroClique.campo === 'parecer') {
-          matchClique = d.parecer.includes(filtroClique.valor.substring(0,5));
+          // Correção: Garante que "Procedente" e "Não Procedente" filtrem corretamente
+          matchClique = (d.parecer === filtroClique.valor) || (filtroClique.valor === "Não Procedente" && d.parecer.includes("Não"));
         } else {
           matchClique = d[filtroClique.campo] === filtroClique.valor;
         }
       }
-
       return matchInputs && matchDate && matchClique;
     });
 
-    renderizar(filtrados, false); // Não redesenha os gráficos para não perder o foco do clique
+    renderizar(filtrados, false);
   }
 
   function limparFiltros() {
