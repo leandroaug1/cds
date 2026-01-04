@@ -7,7 +7,7 @@ function doGet(e) {
       .setMimeType(ContentService.MimeType.JSON); //
   } catch (err) {
     return ContentService.createTextOutput(JSON.stringify({ "status": "erro", "msg": err.toString() }))
-      .setMimeType(ContentService.MimeType.JSON); //
+      .setMimeType(ContentService.MimeType.JSON);
   }
 }
 
@@ -17,6 +17,7 @@ function doPost(e) {
     const sheet = ss.getSheetByName("ControleCds"); //
     const data = JSON.parse(e.postData.contents);
     
+    // Força a atualização dos dados antes de ler
     SpreadsheetApp.flush();
     const rows = sheet.getDataRange().getValues();
 
@@ -31,6 +32,7 @@ function doPost(e) {
     } 
     else if (data.action === "EDIT") {
       for (let i = 1; i < rows.length; i++) {
+        // Busca pela chave única (CD)
         if (rows[i][0].toString().trim() === data.idOriginal.toString().trim()) {
           let url1 = data.anexo1Base64 ? uploadParaDrive(data.anexo1Base64, data.anexo1Nome) : (data.anexo1Existente || "");
           let url2 = data.anexo2Base64 ? uploadParaDrive(data.anexo2Base64, data.anexo2Nome) : (data.anexo2Existente || "");
@@ -44,10 +46,10 @@ function doPost(e) {
       }
     } 
     else if (data.action === "DELETE") {
-      // CORREÇÃO: Percorre de baixo para cima para remover a linha física inteira
+      // Percorre de baixo para cima para não bugar os índices ao remover linhas
       for (let i = rows.length - 1; i >= 1; i--) {
         if (rows[i][0].toString().trim() === data.id.toString().trim()) {
-          sheet.deleteRow(i + 1); // Remove a linha física
+          sheet.deleteRow(i + 1); // Remove a linha física inteira
           break; 
         }
       }
@@ -57,7 +59,7 @@ function doPost(e) {
       .setMimeType(ContentService.MimeType.JSON); //
   } catch (err) {
     return ContentService.createTextOutput(JSON.stringify({ "result": "Erro", "error": err.toString() }))
-      .setMimeType(ContentService.MimeType.JSON); //
+      .setMimeType(ContentService.MimeType.JSON);
   }
 }
 
@@ -66,10 +68,10 @@ function getDadosDashboard() {
   const sheet = ss.getSheetByName("ControleCds");
   const values = sheet.getDataRange().getValues();
   
-  // FILTRO: Ignora linhas onde o CD está vazio (evita erro de data 1969)
+  // FILTRO: Ignora linhas onde a coluna CD está vazia (evita erro de data 1969)
   const dados = values.filter((linha, index) => {
-    return index > 0 && linha[0].toString().trim() !== "";
-  }); //
+    return index > 0 && linha[0] !== "" && linha[0] !== null;
+  });
 
   return dados.map(linha => {
     let d = linha[5];
