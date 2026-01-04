@@ -24,9 +24,6 @@
     td { padding: 10px; border-bottom: 1px solid #eee; }
     #modalForm { display:none; position:fixed; z-index:1000; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.6); }
     .modal-content { background:white; margin:2% auto; padding:25px; width:450px; border-radius:8px; max-height: 90vh; overflow-y: auto; }
-    .form-group { margin-bottom: 12px; }
-    .form-group label { display:block; font-weight:bold; margin-bottom: 4px; font-size: 12px; }
-    .form-group input, .form-group select { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
     #loader { position: fixed; inset: 0; background: rgba(255,255,255,0.8); z-index: 9999; display: none; flex-direction: column; justify-content: center; align-items: center; }
     .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--bi-blue); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
   </style>
@@ -71,16 +68,14 @@
       <input type="hidden" id="edit-id-original">
       <input type="hidden" id="anexo1-existente">
       <input type="hidden" id="anexo2-existente">
-      <div class="form-group"><label>CD:</label><input type="text" id="in-cd" required></div>
-      <div class="form-group"><label>OS:</label><input type="text" id="in-os"></div>
-      <div class="form-group"><label>PN:</label><input type="text" id="in-pn"></div>
-      <div class="form-group"><label>OC:</label><input type="text" id="in-oc"></div>
-      <div class="form-group"><label>Aplicação:</label><input type="text" id="in-aplic"></div>
-      <div class="form-group"><label>Data:</label><input type="date" id="in-data" required></div>
-      <div class="form-group"><label>Quantidade:</label><input type="number" id="in-qtd" value="1"></div>
-      <div class="form-group"><label>Parecer:</label><select id="in-parecer"><option value="Procedente">Procedente</option><option value="Não Procedente">Não Procedente</option></select></div>
-      <div class="form-group"><label>Anexo 1 (Imagem):</label><input type="file" id="f1" accept="image/*"></div>
-      <div class="form-group"><label>Anexo 2 (Doc/PPTX):</label><input type="file" id="f2"></div>
+      <div style="margin-bottom:10px"><label>CD:</label><input type="text" id="in-cd" style="width:100%" required></div>
+      <div style="margin-bottom:10px"><label>Data:</label><input type="date" id="in-data" style="width:100%" required></div>
+      <div style="margin-bottom:10px"><label>Quantidade:</label><input type="number" id="in-qtd" value="1" style="width:100%"></div>
+      <div style="margin-bottom:10px"><label>Parecer:</label>
+        <select id="in-parecer" style="width:100%"><option value="Procedente">Procedente</option><option value="Não Procedente">Não Procedente</option></select>
+      </div>
+      <div style="margin-bottom:10px"><label>Anexo 1:</label><input type="file" id="f1"></div>
+      <div style="margin-bottom:10px"><label>Anexo 2:</label><input type="file" id="f2"></div>
       <button type="button" onclick="salvar()" class="btn btn-new" style="width:100%">SALVAR</button>
       <button type="button" onclick="fecharModal()" style="width:100%; border:none; background:none; color:gray; cursor:pointer; margin-top:10px">Cancelar</button>
     </form>
@@ -88,8 +83,8 @@
 </div>
 
 <script>
-  // COLOQUE A SUA URL DE EXECUÇÃO DO APPS SCRIPT ABAIXO
-  const SCRIPT_URL = "SUA_URL_DO_SCRIPT_AQUI/exec"; 
+  // ATENÇÃO: COLE SUA URL DE IMPLANTAÇÃO ABAIXO
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwZ0aaF_nK7i6EQVQXtdt2tLfk9ZrmJfgA2SSo5CEG2BvXafljmNspM1GG9_C-iJjkp/exec"; 
   let dadosOriginais = [];
   let filtroClique = { campo: null, valor: null };
 
@@ -102,7 +97,7 @@
       const resp = await fetch(SCRIPT_URL);
       dadosOriginais = await resp.json();
       renderizar(dadosOriginais, true);
-    } catch (e) { alert("Erro ao carregar dados. Verifique a URL do script e as permissões."); }
+    } catch (e) { alert("Erro ao carregar dados. Refaça a implantação do Apps Script."); }
     finally { document.getElementById('loader').style.display = 'none'; }
   }
 
@@ -118,8 +113,8 @@
         <td>${d.dataExibicao}</td><td>${d.qtd}</td>
         <td style="font-weight:bold; color:${d.parecer === 'Procedente' ? '#01B8AA' : '#E66C37'}">${d.parecer}</td>
         <td>
-          ${d.anexo1 ? `<a href="${d.anexo1}" target="_blank">🖼️ Foto</a>` : ''}
-          ${d.anexo2 ? `<a href="${d.anexo2}" target="_blank">📊 Doc</a>` : ''}
+          ${d.anexo1 ? `<a href="${d.anexo1}" target="_blank">🔗Anexo1</a>` : ''}
+          ${d.anexo2 ? `<a href="${d.anexo2}" target="_blank">🔗Anexo2</a>` : ''}
         </td>
         <td>
           <button class="btn-edit" onclick="editarRegistro('${d.id}')">Editar</button>
@@ -138,7 +133,7 @@
       const sel = pie.getSelection()[0];
       if(sel) { filtroClique = { campo: 'parecer', valor: pData.getValue(sel.row, 0) }; filtrar(); }
     });
-    pie.draw(pData, { ...commonOptions, title: 'Análise por Parecer', pieHole: 0.45, colors: ['#01B8AA', '#E66C37'] });
+    pie.draw(pData, { ...commonOptions, title: 'Parecer', pieHole: 0.45, colors: ['#01B8AA', '#E66C37'] });
 
     const aplicMap = {};
     dadosOriginais.forEach(d => { aplicMap[d.aplic] = (aplicMap[d.aplic] || 0) + 1; });
@@ -148,15 +143,13 @@
       const sel = bar.getSelection()[0];
       if(sel) { filtroClique = { campo: 'aplic', valor: bData.getValue(sel.row, 0) }; filtrar(); }
     });
-    bar.draw(bData, { ...commonOptions, title: 'Top 10 Aplicações', colors: ['#118DFF'], legend: 'none', chartArea: { left: 180, width: '70%', height: '80%' } });
+    bar.draw(bData, { ...commonOptions, title: 'Top Aplicações', colors: ['#118DFF'], legend: 'none', chartArea: { left: 180, width: '70%', height: '80%' } });
   }
 
   function filtrar() {
     const filtrados = dadosOriginais.filter(d => {
       if(!filtroClique.valor) return true;
-      if(filtroClique.campo === 'parecer') {
-          return (d.parecer === filtroClique.valor) || (filtroClique.valor === "Não Procedente" && d.parecer.includes("Não"));
-      }
+      if(filtroClique.campo === 'parecer') return (d.parecer === filtroClique.valor) || (filtroClique.valor === "Não Procedente" && d.parecer.includes("Não"));
       return d[filtroClique.campo] === filtroClique.valor;
     });
     renderizar(filtrados, false);
@@ -165,15 +158,10 @@
   function abrirModal(id = null) {
     document.getElementById('formRegistro').reset();
     document.getElementById('edit-id-original').value = id || "";
-    document.getElementById('modalTitle').innerText = id ? "Editar Registro" : "Novo Registro";
     if(id) {
       const item = dadosOriginais.find(d => d.id.toString() === id.toString());
       if(item) {
         document.getElementById('in-cd').value = item.cd;
-        document.getElementById('in-os').value = item.os;
-        document.getElementById('in-pn').value = item.pn;
-        document.getElementById('in-oc').value = item.oc;
-        document.getElementById('in-aplic').value = item.aplic;
         document.getElementById('in-data').value = item.dataRaw;
         document.getElementById('in-qtd').value = item.qtd;
         document.getElementById('in-parecer').value = item.parecer;
@@ -185,14 +173,12 @@
   }
 
   function fecharModal() { document.getElementById('modalForm').style.display = 'none'; }
-  function editarRegistro(id) { abrirModal(id); }
 
   async function excluirRegistro(id) {
-    if(!confirm("Tem certeza que deseja excluir permanentemente o registro " + id + "?")) return;
+    if(!confirm("Excluir permanentemente o registro " + id + "?")) return;
     document.getElementById('loader').style.display = 'flex';
     fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: "DELETE", id: id }) })
-      .then(() => iniciar())
-      .catch(() => alert("Erro ao excluir."));
+      .then(() => iniciar());
   }
 
   async function salvar() {
@@ -202,10 +188,6 @@
       action: document.getElementById('edit-id-original').value ? "EDIT" : "ADD",
       idOriginal: document.getElementById('edit-id-original').value,
       cd: document.getElementById('in-cd').value,
-      os: document.getElementById('in-os').value,
-      pn: document.getElementById('in-pn').value,
-      oc: document.getElementById('in-oc').value,
-      aplic: document.getElementById('in-aplic').value,
       data: document.getElementById('in-data').value,
       qtd: document.getElementById('in-qtd').value,
       parecer: document.getElementById('in-parecer').value,
@@ -217,9 +199,7 @@
       anexo2Nome: f2 ? f2.name : ""
     };
     document.getElementById('loader').style.display = 'flex';
-    fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) })
-      .then(() => { fecharModal(); iniciar(); })
-      .catch(() => alert("Erro ao salvar."));
+    fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) }).then(() => { fecharModal(); iniciar(); });
   }
 
   const toBase64 = file => new Promise(res => {
@@ -227,8 +207,6 @@
     reader.readAsDataURL(file);
     reader.onload = () => res(reader.result);
   });
-
-  function limparFiltros() { filtroClique = { campo: null, valor: null }; renderizar(dadosOriginais, true); }
 </script>
 </body>
 </html>
