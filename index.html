@@ -2,13 +2,13 @@
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8">
-  <title>SAP Quality Dashboard - BI Corrigido</title>
+  <title>SAP Quality Dashboard - BI Master</title>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
   <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
   <style>
     body { font-family: 'Roboto', sans-serif; margin: 0; background-color: #f4f6f8; font-size: 13px; }
-    #loading { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.9); z-index:999; display:none; flex-direction:column; justify-content:center; align-items:center; }
+    #loading { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.9); z-index:999; display:flex; flex-direction:column; justify-content:center; align-items:center; }
     .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #3498db; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
     @keyframes spin { 100% { transform: rotate(360deg); } }
     .header { background: #2c3e50; color: white; padding: 15px 25px; display: flex; justify-content: space-between; align-items: center; }
@@ -37,7 +37,7 @@
 </head>
 <body>
 
-  <div id="loading"><div class="spinner"></div><div>Sincronizando...</div></div>
+  <div id="loading"><div class="spinner"></div><div>Processando...</div></div>
 
   <div class="header">
     <h1><span class="material-icons">analytics</span> SAP Quality Dashboard</h1>
@@ -50,9 +50,9 @@
   <div class="main-content">
     <div class="kpi-grid">
       <div class="card"><div class="card-title">Cds</div><div class="card-value" id="kpi-total">-</div></div>
-      <div class="card" style="border-left-color:#e74c3c"><div class="card-title">Peças Segregadas</div><div class="card-value" id="kpi-escape">-</div></div>
+      <div class="card" style="border-left-color:#e74c3c"><div class="card-title">Peças</div><div class="card-value" id="kpi-escape">-</div></div>
       <div class="card" style="border-left-color:#2ecc71"><div class="card-title">Procedentes</div><div class="card-value" id="kpi-proc">-</div></div>
-      <div class="card" style="border-left-color:#f1c40f"><div class="card-title">Não Procedentes</div><div class="card-value" id="kpi-nproc">-</div></div>
+      <div class="card" style="border-left-color:#f1c40f"><div class="card-title">Não Proc.</div><div class="card-value" id="kpi-nproc">-</div></div>
     </div>
 
     <div class="charts-row">
@@ -68,7 +68,7 @@
 
     <div class="card" style="border:none; padding:15px">
       <div class="chart-header"><span>Detalhamento</span><button class="btn" style="background:#f4f6f8" onclick="toggleFiltros()">Pesquisa Avançada</button></div>
-      <div class="table-container" style="overflow-x:auto">
+      <div class="table-container">
         <table id="tabela">
           <thead>
             <tr><th>CD</th><th>OS</th><th>PN</th><th>OC</th><th>Aplic</th><th>Data</th><th>Qtd</th><th>Parecer</th><th>Anexos</th><th>Ações</th></tr>
@@ -124,8 +124,8 @@
     google.charts.setOnLoadCallback(iniciar);
 
     var dadosBrutos = [];
-    var filtroBI_P = null, filtroBI_A = null;
-    const URL_API = "SUA_URL_DA_API_AQUI"; // SUBSTITUA PELA SUA URL /exec
+    var fP = null, fA = null;
+    const URL_API = "SUA_URL_DA_API_AQUI"; // Substitua pela sua URL /exec
 
     function iniciar() {
       document.getElementById('loading').style.display='flex';
@@ -138,12 +138,12 @@
     function atualizarDashboard() {
       const inputs = document.querySelectorAll('.filter-input');
       const filtrados = dadosBrutos.filter(i => {
-        // CORREÇÃO DO BUG: Comparação exata para evitar que "Não Procedente" caia no filtro de "Procedente"
-        if(filtroBI_P) {
-          if (filtroBI_P === "Procedente" && i.parecer !== "Procedente") return false;
-          if (filtroBI_P === "Não Procedente" && i.parecer !== "Não Procedente") return false;
+        // CORREÇÃO DO CROSS-FILTER: Comparação exata para "Procedente"
+        if(fP) {
+          if (fP === "Procedente" && i.parecer !== "Procedente") return false;
+          if (fP === "Não Procedente" && i.parecer !== "Não Procedente") return false;
         }
-        if(filtroBI_A && i.aplic !== filtroBI_A) return false;
+        if(fA && i.aplic !== fA) return false;
         
         let cols = ['cd','os','pn','oc','aplic','dataVisual','qtd','parecer'];
         for(let idx=0; idx<8; idx++) {
@@ -153,8 +153,8 @@
         return true;
       });
       renderKPIs(filtrados); renderTable(filtrados); renderCharts(filtrados);
-      document.getElementById('badgeP').style.display = filtroBI_P ? 'inline' : 'none';
-      document.getElementById('badgeA').style.display = filtroBI_A ? 'inline' : 'none';
+      document.getElementById('badgeP').style.display = fP ? 'inline' : 'none';
+      document.getElementById('badgeA').style.display = fA ? 'inline' : 'none';
     }
 
     function renderTable(d) {
@@ -175,7 +175,7 @@
       let chartP = new google.visualization.PieChart(document.getElementById('div_rosca'));
       google.visualization.events.addListener(chartP, 'select', () => {
         let s = chartP.getSelection();
-        if(s.length > 0) { filtroBI_P = s[0].row === 0 ? "Procedente" : "Não Procedente"; atualizarDashboard(); }
+        if(s.length > 0) { fP = s[0].row === 0 ? "Procedente" : "Não Procedente"; atualizarDashboard(); }
       });
       chartP.draw(google.visualization.arrayToDataTable([['P', 'Q'],['Procedente', p],['Não Procedente', np]]), { pieHole: 0.5, colors: ['#2ecc71','#f1c40f'], chartArea:{width:'90%', height:'80%'}, legend:{position:'bottom', textStyle:{fontSize:10}} });
 
@@ -185,7 +185,7 @@
       let chartA = new google.visualization.BarChart(document.getElementById('div_barras'));
       google.visualization.events.addListener(chartA, 'select', () => {
         let s = chartA.getSelection();
-        if(s.length > 0) { filtroBI_A = barData[s[0].row+1][0]; atualizarDashboard(); }
+        if(s.length > 0) { fA = barData[s[0].row+1][0]; atualizarDashboard(); }
       });
       chartA.draw(google.visualization.arrayToDataTable(barData), { legend:'none', colors:['#2c3e50'], chartArea:{left:140, width:'100%', height:'80%'}, vAxis:{textStyle:{fontSize:10}}, hAxis:{textStyle:{fontSize:10}} });
     }
@@ -200,7 +200,7 @@
     function toggleFiltros() { let r = document.getElementById('rowFiltros'); r.style.display = r.style.display==='table-row' ? 'none' : 'table-row'; }
     function abrirNovo() { document.getElementById('formCad').reset(); document.getElementById('f_id').value=""; document.getElementById('modalForm').style.display='flex'; }
     function fecharModal() { document.getElementById('modalForm').style.display='none'; }
-    function limparBI() { filtroBI_P = null; filtroBI_A = null; document.querySelectorAll('.filter-input').forEach(i => i.value=""); atualizarDashboard(); }
+    function limparBI() { fP = null; fA = null; document.querySelectorAll('.filter-input').forEach(i => i.value=""); atualizarDashboard(); }
 
     function editar(id) {
       let i = dadosBrutos.find(x => x.idLinha == id);
