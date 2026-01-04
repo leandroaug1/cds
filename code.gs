@@ -1,10 +1,10 @@
-const ID_PLANILHA = "1rU7ETLF7vxQY3mQNFjVSpVmWts6lcZltzb22GQWy9sQ";
+const ID_PLANILHA = "1rU7ETLF7vxQY3mQNFjVSpVmWts6lcZltzb22GQWy9sQ"; //
 
 function doGet(e) {
   try {
     const dados = getDadosDashboard();
     return ContentService.createTextOutput(JSON.stringify(dados))
-      .setMimeType(ContentService.MimeType.JSON);
+      .setMimeType(ContentService.MimeType.JSON); //
   } catch (err) {
     return ContentService.createTextOutput(JSON.stringify({ "status": "erro", "msg": err.toString() }))
       .setMimeType(ContentService.MimeType.JSON);
@@ -13,10 +13,11 @@ function doGet(e) {
 
 function doPost(e) {
   try {
-    const ss = SpreadsheetApp.openById(ID_PLANILHA);
-    const sheet = ss.getSheetByName("ControleCds");
     const data = JSON.parse(e.postData.contents);
+    const ss = SpreadsheetApp.openById(ID_PLANILHA);
+    const sheet = ss.getSheetByName("ControleCds"); //
     
+    // Garante que os dados mais recentes sejam lidos antes de processar
     SpreadsheetApp.flush();
     const rows = sheet.getDataRange().getValues();
 
@@ -27,7 +28,7 @@ function doPost(e) {
         data.qtd, data.parecer, 
         data.anexo1Base64 ? uploadParaDrive(data.anexo1Base64, data.anexo1Nome) : "",
         data.anexo2Base64 ? uploadParaDrive(data.anexo2Base64, data.anexo2Nome) : ""
-      ]);
+      ]); //
     } 
     else if (data.action === "EDIT") {
       for (let i = 1; i < rows.length; i++) {
@@ -44,20 +45,20 @@ function doPost(e) {
       }
     } 
     else if (data.action === "DELETE") {
-      // Percorre de baixo para cima para remover a linha física sem bugar os índices
+      // CORREÇÃO: Percorre de baixo para cima para remover a linha física
       for (let i = rows.length - 1; i >= 1; i--) {
         if (rows[i][0].toString().trim() === data.id.toString().trim()) {
-          sheet.deleteRow(i + 1);
+          sheet.deleteRow(i + 1); // Remove a linha inteira da planilha
           break; 
         }
       }
     }
 
     return ContentService.createTextOutput(JSON.stringify({ "result": "Sucesso!" }))
-      .setMimeType(ContentService.MimeType.JSON);
+      .setMimeType(ContentService.MimeType.JSON); //
   } catch (err) {
     return ContentService.createTextOutput(JSON.stringify({ "result": "Erro", "error": err.toString() }))
-      .setMimeType(ContentService.MimeType.JSON);
+      .setMimeType(ContentService.MimeType.JSON); //
   }
 }
 
@@ -66,10 +67,10 @@ function getDadosDashboard() {
   const sheet = ss.getSheetByName("ControleCds");
   const values = sheet.getDataRange().getValues();
   
-  // Filtra para ignorar linhas onde o CD está vazio (evita erro de data 1969)
+  // CORREÇÃO: Filtra linhas onde o campo CD está vazio para evitar erro de data 1969
   const dados = values.filter((linha, index) => {
     return index > 0 && linha[0] !== "" && linha[0] !== null;
-  });
+  }); //
 
   return dados.map(linha => {
     let d = linha[5];
@@ -82,7 +83,7 @@ function getDadosDashboard() {
       aplic: String(linha[4] || ""),
       dataRaw: d instanceof Date ? d.toISOString().split('T')[0] : "", 
       dataExibicao: d instanceof Date ? Utilities.formatDate(d, "GMT-3", "dd/MM/yyyy") : String(d || "-"),
-      qtd: Number(linha[6]) || 0,
+      qtd: Number(linha[6]) || 0, //
       parecer: String(linha[7] || "Sem Parecer"),
       anexo1: String(linha[8] || ""),
       anexo2: String(linha[9] || "")
@@ -94,7 +95,7 @@ function uploadParaDrive(base64Data, fileName) {
   const contentType = base64Data.substring(5, base64Data.indexOf(';'));
   const bytes = Utilities.base64Decode(base64Data.split(',')[1]);
   const blob = Utilities.newBlob(bytes, contentType, fileName);
-  const file = DriveApp.getRootFolder().createFile(blob);
+  const file = DriveApp.getRootFolder().createFile(blob); //
   file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
   return file.getUrl();
 }
