@@ -30,14 +30,11 @@
     .filter-input { width: 100%; padding: 4px; border: 1px solid #ccc; border-radius: 3px; font-size: 10px; }
     .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; display: none; justify-content: center; align-items: center; }
     .modal-content { background: white; padding: 25px; border-radius: 8px; width: 550px; max-height: 90vh; overflow-y: auto; }
-    .form-group { margin-bottom: 12px; }
-    .form-group label { display: block; font-size: 11px; font-weight: bold; margin-bottom: 4px; }
-    .form-input { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
   </style>
 </head>
 <body>
 
-  <div id="loading"><div class="spinner"></div><div>Processando...</div></div>
+  <div id="loading"><div class="spinner"></div><div id="statusText">Processando...</div></div>
 
   <div class="header">
     <h1><span class="material-icons">analytics</span> SAP Quality Dashboard</h1>
@@ -49,10 +46,10 @@
 
   <div class="main-content">
     <div class="kpi-grid">
-      <div class="card"><div class="card-title">Cds</div><div class="card-value" id="kpi-total">-</div></div>
-      <div class="card" style="border-left-color:#e74c3c"><div class="card-title">Peças</div><div class="card-value" id="kpi-escape">-</div></div>
+      <div class="card"><div class="card-title">Cds Registradas</div><div class="card-value" id="kpi-total">-</div></div>
+      <div class="card" style="border-left-color:#e74c3c"><div class="card-title">Peças Segregadas</div><div class="card-value" id="kpi-escape">-</div></div>
       <div class="card" style="border-left-color:#2ecc71"><div class="card-title">Procedentes</div><div class="card-value" id="kpi-proc">-</div></div>
-      <div class="card" style="border-left-color:#f1c40f"><div class="card-title">Não Proc.</div><div class="card-value" id="kpi-nproc">-</div></div>
+      <div class="card" style="border-left-color:#f1c40f"><div class="card-title">Não Procedentes</div><div class="card-value" id="kpi-nproc">-</div></div>
     </div>
 
     <div class="charts-row">
@@ -125,13 +122,18 @@
 
     var dadosBrutos = [];
     var fP = null, fA = null;
-    const URL_API = "SUA_URL_DA_API_AQUI"; // Substitua pela sua URL /exec
+    
+    // --- COLE SUA NOVA URL DE IMPLANTAÇÃO AQUI ---
+    const URL_API = "COLOQUE_SUA_URL_AQUI"; 
 
     function iniciar() {
       document.getElementById('loading').style.display='flex';
       fetch(URL_API).then(r => r.json()).then(res => {
         dadosBrutos = res; atualizarDashboard();
         document.getElementById('loading').style.display='none';
+      }).catch(err => {
+         document.getElementById('statusText').innerText = "Erro ao carregar dados reais.";
+         document.getElementById('statusText').style.color = "red";
       });
     }
 
@@ -147,7 +149,7 @@
         
         let cols = ['cd','os','pn','oc','aplic','dataVisual','qtd','parecer'];
         for(let idx=0; idx<8; idx++) {
-          let v = inputs[idx].value.toLowerCase().trim();
+          let v = (inputs[idx].value || "").toLowerCase().trim();
           if(v && !String(i[cols[idx]]).toLowerCase().includes(v)) return false;
         }
         return true;
@@ -169,7 +171,6 @@
     }
 
     function renderCharts(d) {
-      // Rosca
       let p = d.filter(i => i.parecer === "Procedente").length;
       let np = d.filter(i => i.parecer === "Não Procedente").length;
       let chartP = new google.visualization.PieChart(document.getElementById('div_rosca'));
@@ -179,7 +180,6 @@
       });
       chartP.draw(google.visualization.arrayToDataTable([['P', 'Q'],['Procedente', p],['Não Procedente', np]]), { pieHole: 0.5, colors: ['#2ecc71','#f1c40f'], chartArea:{width:'90%', height:'80%'}, legend:{position:'bottom', textStyle:{fontSize:10}} });
 
-      // Barras
       let apps = {}; d.forEach(i => { if(i.aplic) apps[i.aplic] = (apps[i.aplic]||0)+1; });
       let barData = [['App', 'Q']]; Object.keys(apps).sort((a,b)=>apps[b]-apps[a]).slice(0,10).forEach(k => barData.push([k, apps[k]]));
       let chartA = new google.visualization.BarChart(document.getElementById('div_barras'));
