@@ -3,52 +3,51 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Escapes Aero | Sistema BI</title>
+  <title>Escapes Aero | Dashboard BI</title>
   <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
   <style>
     :root { 
-      --bi-blue: #118DFF; --bi-teal: #01B8AA; --bi-orange: #E66C37; --bi-gray-bg: #F3F2F1; 
+      --bi-blue: #118DFF; --bi-teal: #01B8AA; --bi-orange: #E66C37; --bi-gray: #f3f2f1; 
     }
-    body { font-family: 'Segoe UI', sans-serif; background: var(--bi-gray-bg); margin: 0; overflow-x: hidden; }
-    .header { background: #004a99; color: white; padding: 15px 25px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+    body { font-family: 'Segoe UI', sans-serif; background: var(--bi-gray); margin: 0; }
+    .header { background: #004a99; color: white; padding: 15px 25px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
     
-    .btn-group { display: flex; gap: 10px; }
+    .btn-group { display: flex; gap: 8px; }
     .btn { border: none; padding: 10px 18px; font-weight: bold; border-radius: 4px; cursor: pointer; transition: 0.3s; }
-    .btn-new { background: #00ce64; color: white; }
     .btn-update { background: #f2c811; color: #333; }
     .btn-clear { background: white; border: 1px solid #ccc; color: #333; }
-    .btn:hover { opacity: 0.8; transform: translateY(-1px); }
+    .btn:hover { opacity: 0.8; }
 
-    .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; padding: 20px; }
-    .kpi-card { background: white; padding: 20px; border-radius: 4px; text-align: center; border-bottom: 5px solid var(--bi-blue); box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
-    .kpi-value { font-size: 32px; font-weight: bold; margin-top: 5px; }
+    .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; padding: 15px; }
+    .kpi-card { background: white; padding: 15px; border-radius: 4px; text-align: center; border-bottom: 5px solid var(--bi-blue); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+    .kpi-value { font-size: 28px; font-weight: bold; margin-top: 5px; }
     
-    .charts-row { display: grid; grid-template-columns: 1fr 1.5fr; gap: 20px; padding: 0 20px 20px; }
-    .chart-box { background: white; padding: 20px; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); height: 400px; border: 1px solid #e0e0e0; }
+    .charts-row { display: grid; grid-template-columns: 1fr 1.5fr; gap: 15px; padding: 0 15px 15px; }
+    .chart-box { background: white; padding: 15px; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); height: 400px; border: 1px solid #e0e0e0; }
     
-    .filter-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; padding: 15px 20px; background: #fff; margin: 0 20px 15px; border-radius: 4px; border: 1px solid #ddd; }
-    .filter-row input, .filter-row select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; font-size: 13px; }
+    .filter-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; padding: 10px 15px; background: #fff; margin: 0 15px 10px; border-radius: 4px; border: 1px solid #ddd; }
+    .filter-row input, .filter-row select { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; font-size: 13px; }
 
-    .table-container { background: white; margin: 0 20px 40px; border-radius: 4px; overflow-x: auto; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+    .table-container { background: white; margin: 0 15px 20px; border-radius: 4px; overflow-x: auto; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
     table { width: 100%; border-collapse: collapse; font-size: 13px; }
-    th { background: #f8f9fa; padding: 15px; text-align: left; border-bottom: 2px solid var(--bi-blue); color: #444; text-transform: uppercase; }
-    td { padding: 12px 15px; border-bottom: 1px solid #eee; }
+    th { background: #f8f9fa; padding: 12px; text-align: left; border-bottom: 2px solid var(--bi-blue); }
+    td { padding: 10px; border-bottom: 1px solid #eee; }
     tr:hover { background: #f1f7ff; }
     
-    #loader { position: fixed; inset: 0; background: rgba(255,255,255,0.9); z-index: 9999; display: none; flex-direction: column; justify-content: center; align-items: center; }
-    .spinner { border: 6px solid #f3f3f3; border-top: 6px solid var(--bi-blue); border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; }
+    #loader { position: fixed; inset: 0; background: rgba(255,255,255,0.8); z-index: 9999; display: none; flex-direction: column; justify-content: center; align-items: center; }
+    .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--bi-blue); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
 
-<div id="loader"><div class="spinner"></div><h3 style="color:var(--bi-blue)">Sincronizando Dados...</h3></div>
+<div id="loader"><div class="spinner"></div><h3>Sincronizando...</h3></div>
 
 <div class="header">
-  <h2 style="margin:0; letter-spacing: 1px;">Escapes Aero | Dashboard BI</h2>
+  <h2 style="margin:0">Escapes Aero | Dashboard</h2>
   <div class="btn-group">
     <button class="btn btn-update" onclick="iniciar()">ATUALIZAR</button>
-    <button class="btn btn-clear" onclick="limparTodosFiltros()">LIMPAR FILTROS</button>
+    <button class="btn btn-clear" onclick="limparFiltros()">LIMPAR FILTROS</button>
   </div>
 </div>
 
@@ -65,8 +64,8 @@
 </div>
 
 <div class="filter-row">
-  <input type="text" id="fil-cd" placeholder="Procurar CD..." onkeyup="filtrar()">
-  <input type="text" id="fil-pn" placeholder="Procurar PN..." onkeyup="filtrar()">
+  <input type="text" id="fil-cd" placeholder="Filtrar CD..." onkeyup="filtrar()">
+  <input type="text" id="fil-pn" placeholder="Filtrar PN..." onkeyup="filtrar()">
   <select id="fil-parecer" onchange="filtrar()">
     <option value="">Parecer: Todos</option>
     <option value="Procedente">Procedente</option>
@@ -86,9 +85,9 @@
 </div>
 
 <script>
-  const SCRIPT_URL = "SUA_URL_DO_GOOGLE_APPS_SCRIPT_AQUI"; 
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwZ0aaF_nK7i6EQVQXtdt2tLfk9ZrmJfgA2SSo5CEG2BvXafljmNspM1GG9_C-iJjkp/exec"; 
   let dadosOriginais = [];
-  let filtroInterativo = { campo: null, valor: null };
+  let filtroClique = { campo: null, valor: null };
 
   google.charts.load('current', {'packages':['corechart']});
   google.charts.setOnLoadCallback(iniciar);
@@ -96,24 +95,22 @@
   async function iniciar() {
     document.getElementById('loader').style.display = 'flex';
     try {
-      const r = await fetch(SCRIPT_URL);
-      dadosOriginais = await r.json();
+      const resp = await fetch(SCRIPT_URL);
+      dadosOriginais = await resp.json();
       renderizar(dadosOriginais, true);
     } catch (e) {
-      console.error("Erro na conexão:", e);
+      alert("Erro ao carregar dados.");
     } finally {
       document.getElementById('loader').style.display = 'none';
     }
   }
 
-  function renderizar(dados, recalcularGraficos) {
-    // Atualização de KPIs
+  function renderizar(dados, atualizarGraficos) {
     document.getElementById('k-total').innerText = dados.length;
     document.getElementById('k-escape').innerText = dados.reduce((a, b) => a + (Number(b.qtd) || 0), 0);
     document.getElementById('k-proc').innerText = dados.filter(d => d.parecer === "Procedente").length;
     document.getElementById('k-nproc').innerText = dados.filter(d => d.parecer.includes("Não")).length;
 
-    // Tabela
     document.getElementById('corpoTabela').innerHTML = dados.map(d => `
       <tr>
         <td>${d.cd}</td><td>${d.os}</td><td>${d.pn}</td><td>${d.oc}</td><td>${d.aplic}</td>
@@ -122,20 +119,20 @@
       </tr>
     `).join('');
 
-    if (recalcularGraficos) desenharGraficos(dados);
+    if (atualizarGraficos) desenharGraficos(dados);
   }
 
   function desenharGraficos(dados) {
-    const commonOptions = {
-      fontName: 'Segoe UI',
-      backgroundColor: 'transparent',
-      animation: { startup: true, duration: 800, easing: 'out' },
-      legend: { position: 'bottom' }
+    const commonOptions = { 
+      fontName: 'Segoe UI', 
+      chartArea: { width: '85%', height: '75%' }, 
+      legend: { position: 'bottom' },
+      animation: { startup: true, duration: 800, easing: 'out' }
     };
 
     // Gráfico de Pizza (Parecer)
     const pData = google.visualization.arrayToDataTable([
-      ['Parecer', 'Frequência'],
+      ['Parecer', 'Qtd'],
       ['Procedente', dadosOriginais.filter(d => d.parecer === "Procedente").length],
       ['Não Procedente', dadosOriginais.filter(d => d.parecer.includes("Não")).length]
     ]);
@@ -143,87 +140,66 @@
     
     google.visualization.events.addListener(pie, 'select', () => {
       const sel = pie.getSelection()[0];
-      if (sel) {
-        filtroInterativo = { campo: 'parecer', valor: pData.getValue(sel.row, 0) };
+      if(sel) {
+        filtroClique = { campo: 'parecer', valor: pData.getValue(sel.row, 0) };
         filtrar();
       }
     });
+    pie.draw(pData, { ...commonOptions, title: 'Análise por Parecer', pieHole: 0.45, colors: ['#01B8AA', '#E66C37'] });
 
-    pie.draw(pData, { 
-      ...commonOptions, 
-      title: 'Análise por Parecer (Clique para Filtrar)', 
-      pieHole: 0.45, 
-      colors: ['#01B8AA', '#E66C37'],
-      chartArea: { width: '90%', height: '75%' }
-    });
-
-    // Gráfico de Barras (Ocorrência por Aplicação) - Ajustado para Nitidez
+    // Gráfico de Barras (Aplicação) - NITIDEZ MELHORADA
     const aplicMap = {};
     dadosOriginais.forEach(d => { aplicMap[d.aplic] = (aplicMap[d.aplic] || 0) + 1; });
     
     const bData = google.visualization.arrayToDataTable([
-      ['Aplicação', 'Ocorrências', { role: 'style' }],
-      ...Object.entries(aplicMap)
-               .sort((a,b) => b[1] - a[1])
-               .slice(0, 10)
-               .map(e => [e[0], e[1], 'color: #118DFF; opacity: 0.8'])
+      ['Aplicação', 'Qtd'],
+      ...Object.entries(aplicMap).sort((a,b) => b[1]-a[1]).slice(0, 10)
     ]);
-
     const bar = new google.visualization.BarChart(document.getElementById('bar_aplic'));
     
     google.visualization.events.addListener(bar, 'select', () => {
       const sel = bar.getSelection()[0];
-      if (sel) {
-        filtroInterativo = { campo: 'aplic', valor: bData.getValue(sel.row, 0) };
+      if(sel) {
+        filtroClique = { campo: 'aplic', valor: bData.getValue(sel.row, 0) };
         filtrar();
       }
     });
-
-    bar.draw(bData, { 
-      ...commonOptions, 
-      title: 'Top 10 Ocorrências por Aplicação', 
-      legend: { position: 'none' },
-      hAxis: { gridlines: { color: '#f0f0f0' }, baselineColor: '#ccc' },
-      // O 'left: 200' garante que o texto longo da aplicação não seja cortado
-      chartArea: { left: 180, width: '75%', height: '80%' } 
-    });
+    // chartArea left: 180 garante que os nomes das aplicações fiquem visíveis
+    bar.draw(bData, { ...commonOptions, title: 'Top 10 Aplicações', colors: ['#118DFF'], legend: 'none', chartArea: { left: 180, width: '70%', height: '80%' } });
   }
 
   function filtrar() {
     const cd = document.getElementById('fil-cd').value.toLowerCase();
     const pn = document.getElementById('fil-pn').value.toLowerCase();
-    const parecerSelect = document.getElementById('fil-parecer').value;
+    const parecer = document.getElementById('fil-parecer').value;
     const start = document.getElementById('date-start').value;
     const end = document.getElementById('date-end').value;
 
     const filtrados = dadosOriginais.filter(d => {
-      const matchText = d.cd.toLowerCase().includes(cd) && d.pn.toLowerCase().includes(pn) && 
-                       (parecerSelect === "" || d.parecer === parecerSelect);
+      const matchInputs = d.cd.toLowerCase().includes(cd) && d.pn.toLowerCase().includes(pn) && (parecer === "" || d.parecer === parecer);
       
       let matchDate = true;
       if(start) matchDate = matchDate && (d.dataRaw >= start);
       if(end) matchDate = matchDate && (d.dataRaw <= end);
-
-      let matchBI = true;
-      if(filtroInterativo.valor) {
-        // Lógica para capturar "Não Procedente" mesmo se o texto variar levemente
-        if(filtroInterativo.campo === 'parecer') {
-          matchBI = d.parecer.includes(filtroInterativo.valor.substring(0,5));
+      
+      let matchClique = true;
+      if(filtroClique.valor) {
+        if(filtroClique.campo === 'parecer') {
+          matchClique = d.parecer.includes(filtroClique.valor.substring(0,5));
         } else {
-          matchBI = d[filtroInterativo.campo] === filtroInterativo.valor;
+          matchClique = d[filtroClique.campo] === filtroClique.valor;
         }
       }
 
-      return matchText && matchDate && matchBI;
+      return matchInputs && matchDate && matchClique;
     });
 
-    renderizar(filtrados, false); // false para não redesenhar os gráficos e perder a seleção
+    renderizar(filtrados, false); // Não redesenha os gráficos para não perder o foco do clique
   }
 
-  function limparTodosFiltros() {
-    filtroInterativo = { campo: null, valor: null };
-    document.querySelectorAll('input').forEach(i => i.value = "");
-    document.getElementById('fil-parecer').value = "";
+  function limparFiltros() {
+    filtroClique = { campo: null, valor: null };
+    document.querySelectorAll('input, select').forEach(i => i.value = "");
     renderizar(dadosOriginais, true);
   }
 </script>
